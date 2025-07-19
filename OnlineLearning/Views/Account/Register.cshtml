@@ -1,0 +1,36 @@
+﻿@{
+    ViewBag.Title = "Register";
+}
+
+<h2>Register</h2>
+
+<form method="post">
+    <label>Full Name</label>
+    <input name="fullName" class="form-control" required />
+    <br />
+
+    <label>Email</label>
+    <input type="email" name="email" class="form-control" required />
+    <br />
+
+    <label>Password</label>
+    <input type="password" name="password" class="form-control" required />
+    <br />
+
+    <label>Role</label>
+    <select name="role" class="form-control" required>
+        <option value="">-- Select Role --</option>
+        <option value="Student">Student</option>
+        <option value="Instructor">Instructor</option>
+        <option value="Admin">Admin</option>
+    </select>
+    <br />
+
+    <button type="submit" class="btn btn-primary">Register</button>
+    <a href="/Account/Login" class="btn btn-link">Back to Login</a>
+</form>
+
+@if (ViewBag.Error != null)
+{
+    <p style="color:red;">@ViewBag.Error</p>
+}

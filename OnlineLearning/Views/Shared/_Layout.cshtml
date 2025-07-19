@@ -46,4 +46,14 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+@if (Context.Session.GetString("UserRole") == "Instructor")
+{
+    <a asp-controller="Courses" asp-action="MyCourses" class="btn btn-outline-primary">My Courses</a>
+}
+@{
+        var userRole = Context.Session.GetString("UserRole");
+        var isLoggedIn = !string.IsNullOrEmpty(userRole);
+}
+
+
 </html>

@@ -168,5 +168,30 @@ namespace OnlineLearning.Controllers
         {
             return _context.Courses.Any(e => e.CourseId == id);
         }
+
+        public async Task<IActionResult> MyCourses()
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "Instructor")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            int? instructorId = HttpContext.Session.GetInt32("UserId");
+
+            // Check if user is logged in and is an instructor
+            if (HttpContext.Session.GetString("UserRole") != "Instructor" || instructorId == null)
+            {
+                return RedirectToAction("Login", "Account"); // Redirect unauthorized access
+            }
+
+            // Filter courses to only those created by the logged-in instructor
+            var myCourses = _context.Courses
+                .Include(c => c.Category) // Include related Category data
+                .Where(c => c.InstructorId == instructorId);
+
+            return View(await myCourses.ToListAsync()); // Send filtered data to View
+        }
+
     }
 }

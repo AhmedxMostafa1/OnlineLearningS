@@ -1,0 +1,45 @@
+﻿@model IEnumerable<OnlineLearning.Models.Course>
+
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<h1>My Courses</h1>
+
+<p>
+    <!-- Link to Course Creation Page -->
+    <a asp-action="Create" class="btn btn-success">Create New Course</a>
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Created</th>
+            <th>Premium</th>
+            <th>Category</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var course in Model)
+        {
+            <tr>
+                <td>@course.CourseTitle</td>
+                <td>@course.CourseDescription</td>
+                <td>@course.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                <td>@(course.IsPremium == true ? "Yes" : "No")</td>
+                <td>@course.Category?.CategName</td>
+                <td>
+                    <!-- Future edit functionality -->
+                    <a asp-action="Edit" asp-route-id="@course.CourseId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@course.CourseId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@course.CourseId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+

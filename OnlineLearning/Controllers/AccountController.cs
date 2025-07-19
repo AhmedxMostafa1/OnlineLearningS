@@ -12,6 +12,75 @@ public class AccountController : Controller
 
     public IActionResult Login() => View();
 
+    public IActionResult Register() => View();
+
+    [HttpPost]
+    public IActionResult Register(string fullName,string email,string password,string role)
+    {
+        if (string.IsNullOrEmpty(role) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fullName))
+        {
+            ViewBag.Error = "Please fill all fields.";
+            return View();
+        }
+
+        if (role == "Student")
+        {
+            if (_context.Students.Any(s => s.StuEmail == email))
+            {
+                ViewBag.Error = "Email already exists for Student.";
+                return View();
+            }
+
+            var student = new Student
+            {
+                StuFullName = fullName,
+                StuEmail = email,
+                StuPassword = password
+            };
+            _context.Students.Add(student);
+        }
+        else if (role == "Instructor")
+        {
+            if (_context.Instructors.Any(i => i.InstEmail == email))
+            {
+                ViewBag.Error = "Email already exists for Instructor.";
+                return View();
+            }
+
+            var instructor = new Instructor
+            {
+                InstFullName = fullName,
+                InstEmail = email,
+                InstPassword = password
+            };
+            _context.Instructors.Add(instructor);
+        }
+        else if (role == "Admin")
+        {
+            if (_context.Admins.Any(a => a.AdminEmail == email))
+            {
+                ViewBag.Error = "Email already exists for Admin.";
+                return View();
+            }
+
+            var admin = new Admin
+            {
+                AdminFullName = fullName,
+                AdminEmail = email,
+                AdminPassword = password
+            };
+            _context.Admins.Add(admin);
+        }
+        else
+        {
+            ViewBag.Error = "Invalid role selected.";
+            return View();
+        }
+        _context.SaveChanges();
+        TempData["SuccessMessage"] = "Registration successful. Please log in.";
+        return RedirectToAction("Login");
+    }
+
     [HttpPost]
     public IActionResult Login(string email, string password)
     {

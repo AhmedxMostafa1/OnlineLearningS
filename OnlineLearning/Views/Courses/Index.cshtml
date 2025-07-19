@@ -2,7 +2,9 @@
 
 @{
     ViewData["Title"] = "Courses";
+    var role = Context.Session.GetString("UserRole");
 }
+
 
 <h1 class="mb-3">Courses</h1>
 
@@ -19,13 +21,23 @@
             <th>@Html.DisplayNameFor(model => model.First().CreatedAt)</th>
             <th>Category</th>
             <th>Instructor</th>
-            <th>Actions</th>
+            @if (role == "Admin")
+            {
+                <th>Actions</th>
+            }
+                
+            
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
+
             <tr>
+                @if (role == "Admin")
+                {
+                    <th>Actions</th>
+                }
                 <td>@item.CourseTitle</td>
                 <td>@item.CourseDescription</td>
                 <td>@(item.IsPremium == true ? "Yes" : "No")</td>
@@ -33,11 +45,15 @@
                 <td>@item.Category?.CategName</td>
                 <td>@item.Instructor?.InstFullName</td>
 
+
+                @if (role == "Admin")
+                {
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.CourseId" class="btn btn-sm btn-warning">Edit</a>
                     <a asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-sm btn-info">Details</a>
                     <a asp-action="Delete" asp-route-id="@item.CourseId" class="btn btn-sm btn-danger">Delete</a>
                 </td>
+                }
             </tr>
         }
     </tbody>
