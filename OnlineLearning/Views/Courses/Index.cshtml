@@ -1,0 +1,44 @@
+﻿@model IEnumerable<OnlineLearning.Models.Course>
+
+@{
+    ViewData["Title"] = "Courses";
+}
+
+<h1 class="mb-3">Courses</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Course</a>
+</p>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.First().CourseTitle)</th>
+            <th>@Html.DisplayNameFor(model => model.First().CourseDescription)</th>
+            <th>@Html.DisplayNameFor(model => model.First().IsPremium)</th>
+            <th>@Html.DisplayNameFor(model => model.First().CreatedAt)</th>
+            <th>Category</th>
+            <th>Instructor</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.CourseTitle</td>
+                <td>@item.CourseDescription</td>
+                <td>@(item.IsPremium == true ? "Yes" : "No")</td>
+                <td>@(item.CreatedAt?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                <td>@item.Category?.CategName</td>
+                <td>@item.Instructor?.InstFullName</td>
+
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.CourseId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.CourseId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
