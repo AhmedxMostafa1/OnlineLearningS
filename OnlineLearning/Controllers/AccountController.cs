@@ -106,9 +106,9 @@ public class AccountController : Controller
         var admin = _context.Admins.FirstOrDefault(a => a.AdminEmail == email && a.AdminPassword == password);
         if (admin != null)
         {
-            HttpContext.Session.SetString("UserRole", "Admin");
+            HttpContext.Session.SetString("UserRole", "Admins");
             HttpContext.Session.SetInt32("UserId", admin.AdminId);
-            return RedirectToAction("Dashboard", "Admin");
+            return RedirectToAction("Dashboard", "Admins");
         }
 
         ViewBag.Error = "Invalid email or password.";

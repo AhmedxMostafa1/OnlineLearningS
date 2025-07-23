@@ -1,0 +1,29 @@
+﻿@model OnlineLearning.Models.Student
+@{
+    ViewData["Title"] = "Student Details";
+    var enrollments = ViewBag.Enrollments;
+    var allCourses = ViewBag.AllCourses as List<OnlineLearning.Models.Course>;
+}
+
+<h2>@Model.StuFullName</h2>
+
+<h4>Enrolled Courses:</h4>
+<table class="table">
+    <tr><th>Course</th><th>Action</th></tr>
+    @foreach (var e in enrollments)
+    {
+        <tr>
+            <td>@e.Course.CourseTitle</td>
+            <td>
+                <form asp-action="RemoveEnrollment" method="post">
+                    <input type="hidden" name="enrId" value="@e.EnrId" />
+                    <input type="hidden" name="studentId" value="@Model.StuId" />
+                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>
+
+
+

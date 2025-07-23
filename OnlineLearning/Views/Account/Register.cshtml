@@ -2,35 +2,60 @@
     ViewBag.Title = "Register";
 }
 
-<h2>Register</h2>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg rounded-4">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Create Account</h3>
 
-<form method="post">
-    <label>Full Name</label>
-    <input name="fullName" class="form-control" required />
-    <br />
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input id="fullName" name="fullName" class="form-control" required />
+                        </div>
 
-    <label>Email</label>
-    <input type="email" name="email" class="form-control" required />
-    <br />
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" required />
+                        </div>
 
-    <label>Password</label>
-    <input type="password" name="password" class="form-control" required />
-    <br />
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" required />
+                        </div>
 
-    <label>Role</label>
-    <select name="role" class="form-control" required>
-        <option value="">-- Select Role --</option>
-        <option value="Student">Student</option>
-        <option value="Instructor">Instructor</option>
-        <option value="Admin">Admin</option>
-    </select>
-    <br />
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select id="role" name="role" class="form-select" required>
+                                <option value="">-- Select Role --</option>
+                                <option value="Student">Student</option>
+                                <option value="Instructor">Instructor</option>
+                                <option value="Admin">Admin</option>
+                            </select>
+                        </div>
 
-    <button type="submit" class="btn btn-primary">Register</button>
-    <a href="/Account/Login" class="btn btn-link">Back to Login</a>
-</form>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Register</button>
+                            <a href="/Account/Login" class="btn btn-outline-secondary">Back to Login</a>
+                        </div>
 
-@if (ViewBag.Error != null)
-{
-    <p style="color:red;">@ViewBag.Error</p>
-}
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="alert alert-danger mt-3 text-center" role="alert">
+                                @ViewBag.Error
+                            </div>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col text-center">
+                <button class="btn btn-default">Join Us Today</button>
+            </div>
+        </div>  
+    </div>
+</div>

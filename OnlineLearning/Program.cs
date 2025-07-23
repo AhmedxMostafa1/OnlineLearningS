@@ -3,7 +3,7 @@ using OnlineLearning.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Register controller support
+
 builder.Services.AddControllersWithViews();
 
 // ✅ Optional: Authorization support

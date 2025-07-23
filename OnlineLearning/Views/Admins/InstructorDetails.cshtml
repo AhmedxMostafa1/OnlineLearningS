@@ -1,0 +1,37 @@
+﻿@model OnlineLearning.Models.Instructor
+@{
+    ViewData["Title"] = "Instructor Details";
+    var courses = ViewBag.Courses as List<OnlineLearning.Models.Course>;
+}
+
+<h2>@Model.InstFullName</h2>
+
+<h4>Courses Taught:</h4>
+<table class="table">
+    <tr><th>Course</th><th>Action</th></tr>
+    @foreach (var c in courses)
+    {
+        <tr>
+            <td>@c.CourseTitle</td>
+            <td>
+                <form asp-action="RemoveInstructorCourse" method="post">
+                    <input type="hidden" name="courseId" value="@c.CourseId" />
+                    <input type="hidden" name="instructorId" value="@Model.InstId" />
+                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>
+
+<h4>Add Course:</h4>
+<form asp-action="AssignCourseToInstructor" method="post">
+    <input type="hidden" name="instructorId" value="@Model.InstId" />
+    <select name="courseId" class="form-control">
+        @foreach (var c in ViewBag.AllCourses)
+        {
+            <option value="@c.CourseId">@c.CourseTitle</option>
+        }
+    </select>
+    <button type="submit" class="btn btn-success mt-2">Assign</button>
+</form>
