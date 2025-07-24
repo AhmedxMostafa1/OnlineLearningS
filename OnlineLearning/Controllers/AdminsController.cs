@@ -17,6 +17,7 @@ public class AdminsController : Controller
         var students = _context.Students.ToList();
         var instructors = _context.Instructors.ToList();
         var courses = _context.Courses.ToList();
+        ViewBag.Section = section;
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -35,6 +36,12 @@ public class AdminsController : Controller
                 ).ToList();
             }
         }
+        if (section == "requests")
+        {
+            var pending = _context.PendingInstructors.ToList();
+            ViewBag.PendingInstructors = pending;
+        }
+
 
         ViewBag.Section = section;
         ViewBag.UserType = userType;
@@ -93,28 +100,60 @@ public class AdminsController : Controller
         return RedirectToAction("StudentDetails", new { id = studentId });
     }
 
+ 
     [HttpPost]
-    public IActionResult DeleteStudent(int id)
+    public IActionResult ApproveInstructor(int id)
     {
-        var student = _context.Students.Find(id);
-        if (student != null)
+        var pending = _context.PendingInstructors.Find(id);
+        if (pending != null)
         {
-            _context.Students.Remove(student);
+            var instructor = new Instructor
+            {
+                InstFullName = pending.FullName,
+                InstEmail = pending.Email,
+                InstPassword = pending.Password
+            };
+
+            _context.Instructors.Add(instructor);
+            _context.PendingInstructors.Remove(pending);
             _context.SaveChanges();
         }
-        return RedirectToAction("Dashboard");
+        return RedirectToAction("Dashboard", new { section = "requests" });
     }
 
     [HttpPost]
-    public IActionResult DeleteInstructor(int id)
+    public IActionResult RejectInstructor(int id)
     {
-        var instructor = _context.Instructors.Find(id);
-        if (instructor != null)
+        var pending = _context.PendingInstructors.Find(id);
+        if (pending != null)
         {
-            _context.Instructors.Remove(instructor);
+            _context.PendingInstructors.Remove(pending);
             _context.SaveChanges();
         }
-        return RedirectToAction("Dashboard");
+        return RedirectToAction("Dashboard", new { section = "requests" });
+    }
+    [HttpPost]
+    public IActionResult ToggleInstructorStatus(int id)
+    {
+        var instructor = _context.Instructors.FirstOrDefault(i => i.InstId == id);
+        if (instructor != null)
+        {
+            instructor.Status = instructor.Status == "Activated" ? "Deactivated" : "Activated";
+            _context.SaveChanges();
+        }
+        return RedirectToAction("Dashboard", new { section = "instructors" });
+    }
+
+    [HttpPost]
+    public IActionResult ToggleStudentStatus(int id)
+    {
+        var student = _context.Students.FirstOrDefault(s => s.StuId == id);
+        if (student != null)
+        {
+            student.Status = student.Status == "Activated" ? "Deactivated" : "Activated";
+            _context.SaveChanges();
+        }
+        return RedirectToAction("Dashboard", new { section = "students" });
     }
 
 
