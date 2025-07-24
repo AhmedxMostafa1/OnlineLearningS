@@ -39,7 +39,7 @@ public partial class OnlineLearningContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-        => optionsBuilder.UseSqlServer("Server=AHMED\\SQLEXPRESS;Database=OnlineLearning;Trusted_Connection=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=desktop-uv4h5kf\\SQLEXPRESS;Database=OnlineLearning;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -12,10 +12,11 @@ public class AdminsController : Controller
         _context = context;
     }
 
-    public IActionResult Dashboard(string searchBy, string searchTerm, string userType)
+    public IActionResult Dashboard(string searchBy, string searchTerm, string userType, string section = "summary")
     {
         var students = _context.Students.ToList();
         var instructors = _context.Instructors.ToList();
+        var courses = _context.Courses.ToList();
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -23,21 +24,25 @@ public class AdminsController : Controller
             {
                 students = students.Where(s =>
                     (searchBy == "Id" && s.StuId.ToString() == searchTerm) ||
-                    (searchBy == "Name" && s.StuFullName.ToLower().Contains(searchTerm))
+                    (searchBy == "Name" && s.StuFullName.ToLower().Contains(searchTerm.ToLower()))
                 ).ToList();
             }
             else if (userType == "Instructor")
             {
                 instructors = instructors.Where(i =>
                     (searchBy == "Id" && i.InstId.ToString() == searchTerm) ||
-                    (searchBy == "Name" && i.InstFullName.ToLower().Contains(searchTerm))
+                    (searchBy == "Name" && i.InstFullName.ToLower().Contains(searchTerm.ToLower()))
                 ).ToList();
             }
         }
-        ViewBag.UserType = userType; // 
+
+        ViewBag.Section = section;
+        ViewBag.UserType = userType;
         ViewBag.Students = students;
         ViewBag.Instructors = instructors;
-
+        ViewBag.TotalStudents = _context.Students.Count();
+        ViewBag.TotalInstructors = _context.Instructors.Count();
+        ViewBag.TotalCourses = _context.Courses.Count();
 
         return View();
     }
