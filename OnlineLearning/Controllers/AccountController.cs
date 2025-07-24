@@ -14,6 +14,8 @@ public class AccountController : Controller
 
     public IActionResult Register() => View();
 
+    public IActionResult JoinUs() => View();
+
     [HttpPost]
     public IActionResult Register(string fullName,string email,string password,string role)
     {
@@ -88,6 +90,11 @@ public class AccountController : Controller
         var student = _context.Students.FirstOrDefault(s => s.StuEmail == email && s.StuPassword == password);
         if (student != null)
         {
+            if (student.Status == "Deactivated")
+            {
+                ViewBag.Error = "Your account is deactivated. Contact admin.";
+                return View();
+            }
             HttpContext.Session.SetString("UserRole", "Student");
             HttpContext.Session.SetInt32("UserId", student.StuId);
             return RedirectToAction("Index", "Courses");
@@ -97,6 +104,11 @@ public class AccountController : Controller
         var instructor = _context.Instructors.FirstOrDefault(i => i.InstEmail == email && i.InstPassword == password);
         if (instructor != null)
         {
+            if (instructor.Status == "Deactivated")
+            {
+                ViewBag.Error = "Your account is deactivated. Contact admin.";
+                return View();
+            }
             HttpContext.Session.SetString("UserRole", "Instructor");
             HttpContext.Session.SetInt32("UserId", instructor.InstId);
             return RedirectToAction("Index", "Courses");
@@ -114,6 +126,27 @@ public class AccountController : Controller
         ViewBag.Error = "Invalid email or password.";
         return View();
     }
+    [HttpPost]
+    public IActionResult JoinUs(string fullName, string email, string password)
+    {
+        var request = new PendingInstructor
+        {
+            FullName = fullName,
+            Email = email,
+            Password = password, 
+            AppliedAt = DateTime.Now
+        };
+
+        _context.PendingInstructors.Add(request);
+        _context.SaveChanges();
+
+
+        TempData["Message"] = "Your request has been submitted!";
+
+        // Redirect to the login page
+        return RedirectToAction("Login", "Account");
+    }
+
 
     public IActionResult Logout()
     {
