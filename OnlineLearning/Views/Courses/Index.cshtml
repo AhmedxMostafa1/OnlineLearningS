@@ -1,60 +1,64 @@
 ﻿@model IEnumerable<OnlineLearning.Models.Course>
-
 @{
     ViewData["Title"] = "Courses";
     var role = Context.Session.GetString("UserRole");
+    var studentId = Context.Session.GetInt32("UserId");
 }
 
+<h1 class="mb-4">Available Courses</h1>
 
-<h1 class="mb-3">Courses</h1>
+@if (role == "Instructor" || role == "Admin")
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Create New Course</a>
+    </p>
+}
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New Course</a>
-</p>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var course in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">@course.CourseTitle</h5>
+                    <p class="card-text text-truncate">@course.CourseDescription</p>
+                    <p class="card-text"><strong>Instructor:</strong> @course.Instructor?.InstFullName</p>
+                    <p class="card-text"><strong>Category:</strong> @course.Category?.CategName</p>
+                    <p class="card-text">
+                        <strong>Premium:</strong>
+                        @(course.IsPremium == true ? "Yes" : "No")
+                    </p>
 
-<table class="table table-bordered table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.First().CourseTitle)</th>
-            <th>@Html.DisplayNameFor(model => model.First().CourseDescription)</th>
-            <th>@Html.DisplayNameFor(model => model.First().IsPremium)</th>
-            <th>@Html.DisplayNameFor(model => model.First().CreatedAt)</th>
-            <th>Category</th>
-            <th>Instructor</th>
-            @if (role == "Admin")
-            {
-                <th>Actions</th>
-            }
-                
-            
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+                    <div class="mt-auto d-flex flex-column gap-2">
+                        <a asp-action="Details" asp-route-id="@course.CourseId" class="btn btn-outline-primary btn-sm">View Course</a>
 
-            <tr>
-                @if (role == "Admin")
-                {
-                    <th>Actions</th>
-                }
-                <td>@item.CourseTitle</td>
-                <td>@item.CourseDescription</td>
-                <td>@(item.IsPremium == true ? "Yes" : "No")</td>
-                <td>@(item.CreatedAt?.ToString("yyyy-MM-dd") ?? "N/A")</td>
-                <td>@item.Category?.CategName</td>
-                <td>@item.Instructor?.InstFullName</td>
+                        @if (role == "Student")
+                        {
+                            var isEnrolled = course.Enrollments?.Any(e => e.StudentId == studentId) ?? false;
 
+                            if (isEnrolled)
+                            {
+                                <span class="badge bg-secondary">Enrolled</span>
+                            }
+                            else
+                            {
+                                <form asp-controller="Enrollment" asp-action="Enroll" method="post">
+                                    <input type="hidden" name="courseId" value="@course.CourseId" />
+                                    <button type="submit" class="btn btn-success btn-sm w-100">Enroll</button>
+                                </form>
+                            }
+                        }
 
-                @if (role == "Admin")
-                {
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.CourseId" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-sm btn-info">Details</a>
-                    <a asp-action="Delete" asp-route-id="@item.CourseId" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-                }
-            </tr>
-        }
-    </tbody>
-</table>
+                        @if (role == "Admin")
+                        {
+                            <div class="d-flex justify-content-between">
+                                <a asp-action="Edit" asp-route-id="@course.CourseId" class="btn btn-warning btn-sm">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@course.CourseId" class="btn btn-danger btn-sm">Delete</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

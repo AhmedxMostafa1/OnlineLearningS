@@ -1,0 +1,46 @@
+﻿@{
+    ViewBag.Title = "Join Us - Instructor Application";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg rounded-4">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Instructor Application</h3>
+
+                    <form method="post" asp-action="JoinUs" asp-controller="Account">
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input id="fullName" name="fullName" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" required />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Submit Application</button>
+                            <a href="/Account/Login" class="btn btn-outline-secondary">Back to Login</a>
+                        </div>
+
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="alert alert-danger mt-3 text-center">@ViewBag.Error</div>
+                        }
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success mt-3 text-center">@TempData["Success"]</div>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
