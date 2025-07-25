@@ -80,7 +80,7 @@ public class AccountController : Controller
         }
         _context.SaveChanges();
         TempData["SuccessMessage"] = "Registration successful. Please log in.";
-        return RedirectToAction("Login");
+        return RedirectToAction("Loginn");
     }
 
     [HttpPost]
