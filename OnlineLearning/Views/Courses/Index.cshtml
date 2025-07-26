@@ -3,42 +3,70 @@
     ViewData["Title"] = "Courses";
     var role = Context.Session.GetString("UserRole");
     var studentId = Context.Session.GetInt32("UserId");
+    var categories = ViewBag.Categories as List<OnlineLearning.Models.Category>;
 }
 
-<h1 class="mb-4">Available Courses</h1>
+<h1 class="mb-4 text-center">📚 Explore Courses</h1>
+
+<!-- 🔍 Search & Filter -->
+<form method="get" asp-action="Index" class="mb-5 row g-2 justify-content-center">
+    <div class="col-md-4">
+        <input type="text" name="searchQuery" class="form-control" placeholder="🔍 Search by title or category..." />
+    </div>
+    <div class="col-md-3">
+        <select name="categoryId" class="form-select">
+            <option value="">🔖 All Categories</option>
+            @foreach (var cat in categories)
+            {
+                <option value="@cat.CategId">@cat.CategName</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-dark w-100">Search</button>
+    </div>
+</form>
 
 @if (role == "Instructor" || role == "Admin")
 {
-    <p>
-        <a asp-action="Create" class="btn btn-primary">Create New Course</a>
-    </p>
+    <div class="mb-4 text-end">
+        <a asp-action="Create" class="btn btn-primary">➕ Create New Course</a>
+    </div>
 }
 
+<!-- 📦 Course Cards -->
 <div class="row row-cols-1 row-cols-md-3 g-4">
     @foreach (var course in Model)
     {
         <div class="col">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow rounded-4 border-0">
+              
+
                 <div class="card-body d-flex flex-column">
+                    <!-- 🏷️ Title & Description -->
                     <h5 class="card-title">@course.CourseTitle</h5>
-                    <p class="card-text text-truncate">@course.CourseDescription</p>
-                    <p class="card-text"><strong>Instructor:</strong> @course.Instructor?.InstFullName</p>
-                    <p class="card-text"><strong>Category:</strong> @course.Category?.CategName</p>
-                    <p class="card-text">
-                        <strong>Premium:</strong>
-                        @(course.IsPremium == true ? "Yes" : "No")
+                    <p class="card-text text-muted mb-1">
+                        @course.CourseDescription?.Substring(0, Math.Min(100, course.CourseDescription?.Length ?? 0))...
                     </p>
 
+                    <!-- 📄 Course Info -->
+                    <p class="mb-1"><strong>👤 Instructor:</strong> @course.Instructor?.InstFullName</p>
+                    <p class="mb-1"><strong>📂 Category:</strong> @course.Category?.CategName</p>
+                    <p class="mb-1"><strong>💎 Premium:</strong> @(course.IsPremium == true ? "Yes" : "No")</p>
+                    <p class="mb-1"><strong>👥 Enrolled:</strong> @course.Enrollments?.Count ?? 0</p>
+
+            
+
+                    <!-- 🎯 Actions -->
                     <div class="mt-auto d-flex flex-column gap-2">
                         <a asp-action="Details" asp-route-id="@course.CourseId" class="btn btn-outline-primary btn-sm">View Course</a>
 
                         @if (role == "Student")
                         {
                             var isEnrolled = course.Enrollments?.Any(e => e.StudentId == studentId) ?? false;
-
                             if (isEnrolled)
                             {
-                                <span class="badge bg-secondary">Enrolled</span>
+                                <span class="badge bg-secondary text-white p-2 text-center">✔️ Enrolled</span>
                             }
                             else
                             {

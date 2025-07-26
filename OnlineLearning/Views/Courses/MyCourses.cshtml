@@ -2,44 +2,70 @@
 
 @{
     ViewData["Title"] = "My Courses";
+    var role = Context.Session.GetString("UserRole");
 }
 
-<h1>My Courses</h1>
-
-<p>
-   
-    <a asp-action="Create" class="btn btn-success">Create New Course</a>
-</p>
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Created</th>
-            <th>Premium</th>
-            <th>Category</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var course in Model)
+<div class="container py-4">
+    <h2 class="mb-4 fw-bold text-primary">
+        @if (role == "Student")
         {
-            <tr>
-                <td>@course.CourseTitle</td>
-                <td>@course.CourseDescription</td>
-                <td>@course.CreatedAt?.ToString("yyyy-MM-dd")</td>
-                <td>@(course.IsPremium == true ? "Yes" : "No")</td>
-                <td>@course.Category?.CategName</td>
-                <td>
-                    <!-- Future edit functionality -->
-                    <a asp-action="Edit" asp-route-id="@course.CourseId" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-action="Details" asp-route-id="@course.CourseId" class="btn btn-sm btn-info">Details</a>
-                    <a asp-action="Delete" asp-route-id="@course.CourseId" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
+            <text>🎓 Enrolled Courses</text>
         }
-    </tbody>
-</table>
+        else
+        {
+            <text>📚 My Created Courses</text>
+        }
+    </h2>
 
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            @if (role == "Student")
+            {
+                <text>You haven't enrolled in any courses yet.</text>
+            }
+            else
+            {
+                <text>You haven't created any courses yet.</text>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var course in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <h5 class="card-title">@course.CourseTitle</h5>
+                            <p class="card-text text-muted small">
+                                @course.CourseDescription?.Substring(0, Math.Min(course.CourseDescription.Length, 100))...
+                            </p>
+                            <p class="card-text">
+                                <span class="badge bg-secondary">@course.Category?.CategName</span>
+                                @if (course.IsPremium == true)
+                                {
+                                    <span class="badge bg-warning text-dark ms-1">Premium</span>
+                                }
+                            </p>
+                        </div>
 
+                        <div class="card-footer d-flex justify-content-between">
+                            <a asp-action="Details" asp-route-id="@course.CourseId" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+
+                            @if (role == "Instructor")
+                            {
+                                <a asp-action="Edit" asp-route-id="@course.CourseId" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
