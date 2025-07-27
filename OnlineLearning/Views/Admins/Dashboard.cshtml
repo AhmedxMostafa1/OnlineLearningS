@@ -263,7 +263,9 @@
                             <tr>
                                 <td>@p.FullName</td>
                                 <td>@p.Email</td>
-                                <td>@p.AppliedAt?.ToString("g") ?? "N/A"</td>
+                                
+                                <td>@(p.AppliedAt?.ToString("g") ?? "N/A")</td>
+                               
                                 <td>
                                     <form method="post" asp-action="ApproveInstructor" asp-controller="Admins" class="d-inline">
                                         <input type="hidden" name="id" value="@p.PendingInstId" />

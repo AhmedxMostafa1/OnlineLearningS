@@ -53,7 +53,7 @@
                     <p class="mb-1"><strong>👤 Instructor:</strong> @course.Instructor?.InstFullName</p>
                     <p class="mb-1"><strong>📂 Category:</strong> @course.Category?.CategName</p>
                     <p class="mb-1"><strong>💎 Premium:</strong> @(course.IsPremium == true ? "Yes" : "No")</p>
-                    <p class="mb-1"><strong>👥 Enrolled:</strong> @course.Enrollments?.Count ?? 0</p>
+                    <p class="mb-1"><strong>👥 Enrolled:</strong> @(course.Enrollments?.Count ?? 0)</p>
 
             
 

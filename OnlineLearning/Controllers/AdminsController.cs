@@ -17,8 +17,9 @@ public class AdminsController : Controller
         var students = _context.Students.ToList();
         var instructors = _context.Instructors.ToList();
         var courses = _context.Courses.ToList();
-        ViewBag.Section = section;
+        
 
+        //search logic
         if (!string.IsNullOrEmpty(searchTerm))
         {
             if (userType == "Student")
@@ -53,6 +54,7 @@ public class AdminsController : Controller
 
         return View();
     }
+    //todo reAdd this fucnction
     public IActionResult StudentDetails(int id)
     {
         var student = _context.Students.Find(id);
@@ -71,6 +73,8 @@ public class AdminsController : Controller
         ViewBag.Enrollments = enrollments;
         return View(student);
     }
+    
+
 
     public IActionResult InstructorDetails(int id)
     {
@@ -85,7 +89,7 @@ public class AdminsController : Controller
         ViewBag.Courses = courses;
         return View(instructor);
     }
-
+    //
 
 
     [HttpPost]
