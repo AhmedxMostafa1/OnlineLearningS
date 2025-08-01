@@ -9,27 +9,34 @@ public class AccountController : Controller
     {
         _context = context;
     }
-
-    public IActionResult Login() => View();
+    // low 3la sf7t kza yd5ol 2l view bta3o
+    public IActionResult Login() => View();  
 
     public IActionResult Register() => View();
 
+    public IActionResult JoinUs() => View();
+
     [HttpPost]
-    public IActionResult Register(string fullName,string email,string password,string role)
+    
+    public IActionResult Register(string fullName, string email, string password, string role)
     {
-        if (string.IsNullOrEmpty(role) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fullName))
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fullName))
         {
             ViewBag.Error = "Please fill all fields.";
             return View();
         }
 
-        if (role == "Student")
+        //check if email exisit
+        if (_context.Students.Any(s => s.StuEmail == email) ||
+            _context.Instructors.Any(i => i.InstEmail == email) ||
+            _context.Admins.Any(a => a.AdminEmail == email))
+
         {
-            if (_context.Students.Any(s => s.StuEmail == email))
-            {
-                ViewBag.Error = "Email already exists for Student.";
-                return View();
-            }
+            ViewBag.Error = "Email already exists.";
+            return View();
+        }
+        else
+        {
 
             var student = new Student
             {
@@ -38,47 +45,14 @@ public class AccountController : Controller
                 StuPassword = password
             };
             _context.Students.Add(student);
-        }
-        else if (role == "Instructor")
-        {
-            if (_context.Instructors.Any(i => i.InstEmail == email))
-            {
-                ViewBag.Error = "Email already exists for Instructor.";
-                return View();
-            }
 
-            var instructor = new Instructor
-            {
-                InstFullName = fullName,
-                InstEmail = email,
-                InstPassword = password
-            };
-            _context.Instructors.Add(instructor);
-        }
-        else if (role == "Admin")
-        {
-            if (_context.Admins.Any(a => a.AdminEmail == email))
-            {
-                ViewBag.Error = "Email already exists for Admin.";
-                return View();
-            }
 
-            var admin = new Admin
-            {
-                AdminFullName = fullName,
-                AdminEmail = email,
-                AdminPassword = password
-            };
-            _context.Admins.Add(admin);
+
+
+            _context.SaveChanges();
+       //     TempData["SuccessMessage"] = "Registration successful. Please log in.";
+            return RedirectToAction("Login");
         }
-        else
-        {
-            ViewBag.Error = "Invalid role selected.";
-            return View();
-        }
-        _context.SaveChanges();
-        TempData["SuccessMessage"] = "Registration successful. Please log in.";
-        return RedirectToAction("Login");
     }
 
     [HttpPost]
@@ -88,6 +62,11 @@ public class AccountController : Controller
         var student = _context.Students.FirstOrDefault(s => s.StuEmail == email && s.StuPassword == password);
         if (student != null)
         {
+            if (student.Status == "Deactivated")
+            {
+                ViewBag.Error = "Your account is deactivated. Contact admin.";
+                return View();
+            }
             HttpContext.Session.SetString("UserRole", "Student");
             HttpContext.Session.SetInt32("UserId", student.StuId);
             return RedirectToAction("Index", "Courses");
@@ -97,6 +76,11 @@ public class AccountController : Controller
         var instructor = _context.Instructors.FirstOrDefault(i => i.InstEmail == email && i.InstPassword == password);
         if (instructor != null)
         {
+            if (instructor.Status == "Deactivated")
+            {
+                ViewBag.Error = "Your account is deactivated. Contact admin.";
+                return View();
+            }
             HttpContext.Session.SetString("UserRole", "Instructor");
             HttpContext.Session.SetInt32("UserId", instructor.InstId);
             return RedirectToAction("Index", "Courses");
@@ -114,6 +98,28 @@ public class AccountController : Controller
         ViewBag.Error = "Invalid email or password.";
         return View();
     }
+    [HttpPost]
+    public IActionResult JoinUs(string fullName, string email, string password)
+    {
+        var request = new PendingInstructor
+        {
+            FullName = fullName,
+            Email = email,
+            Password = password, 
+            AppliedAt = DateTime.Now
+        };
+
+        _context.PendingInstructors.Add(request);
+        _context.SaveChanges();
+
+
+       //
+       //TempData["Message"] = "Your request has been submitted!";
+
+        // Redirect to the login page
+        return RedirectToAction("Login", "Account");
+    }
+
 
     public IActionResult Logout()
     {

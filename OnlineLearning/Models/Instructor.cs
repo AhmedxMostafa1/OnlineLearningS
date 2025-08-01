@@ -13,5 +13,7 @@ public partial class Instructor
 
     public string? InstPassword { get; set; }
 
+    public string Status { get; set; } = null!;
+
     public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
 }

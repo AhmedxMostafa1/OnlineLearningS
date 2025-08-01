@@ -40,23 +40,23 @@
             z-index: 1000;
         }
 
-        .sidebar h4 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+            .sidebar h4 {
+                text-align: center;
+                margin-bottom: 20px;
+            }
 
-        .sidebar a {
-            padding: 15px 20px;
-            color: #ccc;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
+            .sidebar a {
+                padding: 15px 20px;
+                color: #ccc;
+                text-decoration: none;
+                transition: background 0.3s;
+            }
 
-        .sidebar a.active,
-        .sidebar a:hover {
-            background-color: #007bff;
-            color: #fff;
-        }
+                .sidebar a.active,
+                .sidebar a:hover {
+                    background-color: #007bff;
+                    color: #fff;
+                }
 
         .content {
             margin-left: 240px;
@@ -99,21 +99,21 @@
             text-decoration: none;
         }
 
-        .logout-btn:hover {
-            background-color: #c82333;
-        }
+            .logout-btn:hover {
+                background-color: #c82333;
+            }
 
         .search-container {
             text-align: center;
             margin-bottom: 20px;
         }
 
-        .search-container input {
-            width: 50%;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+            .search-container input {
+                width: 50%;
+                padding: 8px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+            }
 
         table {
             background: #fff;
@@ -169,6 +169,7 @@
                             <th>ID</th>
                             <th>Full Name</th>
                             <th>Email</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -179,12 +180,19 @@
                                 <td>@student.StuId</td>
                                 <td>@student.StuFullName</td>
                                 <td>@student.StuEmail</td>
+                                <td>@student.Status</td>
                                 <td>
-                                    <form asp-action="DeleteStudent" method="post">
-                                        <input type="hidden" name="id" value="@student.StuId" />
-                                        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
-                                    </form>
+                                    <div class="d-flex gap-1">
+                                        <form method="post" asp-action="ToggleStudentStatus" asp-route-id="@student.StuId" onsubmit="return confirm('Are you sure you want to toggle this instructor\'s status?');">
+                                            <button type="submit" class="btn btn-sm @(student.Status == "Activated" ? "btn-danger" : "btn-success")">
+                                                @(student.Status == "Activated" ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
+
+                                        
+                                    </div>
                                 </td>
+
                             </tr>
                         }
                     </tbody>
@@ -202,6 +210,7 @@
                             <th>ID</th>
                             <th>Full Name</th>
                             <th>Email</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -212,23 +221,70 @@
                                 <td>@instructor.InstId</td>
                                 <td>@instructor.InstFullName</td>
                                 <td>@instructor.InstEmail</td>
+                                <td>@instructor.Status</td>
                                 <td>
-                                    <form asp-action="DeleteInstructor" method="post">
-                                        <input type="hidden" name="id" value="@instructor.InstId" />
-                                        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
-                                    </form>
+                                    <div class="d-flex gap-1">
+                                        <form method="post" asp-action="ToggleInstructorStatus" asp-route-id="@instructor.InstId" onsubmit="return confirm('Are you sure you want to toggle this instructor\'s status?');">
+                                            <button type="submit" class="btn btn-sm @(instructor.Status == "Activated" ? "btn-danger" : "btn-success")">
+                                                @(instructor.Status == "Activated" ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
+
+                                       
+                                    </div>
                                 </td>
+
                             </tr>
                         }
                     </tbody>
                 </table>
             }
 
-            @if (section == "requests")
-            {
-                <p>This section is under construction.</p>
+            @{
+                var pendingInstructors = ViewBag.PendingInstructors as List<OnlineLearning.Models.PendingInstructor>;
+                string currentSection = ViewBag.Section as string;
             }
+
+            @if (currentSection == "requests" && pendingInstructors != null)
+            {
+                <h3 class="mb-3">Pending Instructor Applications</h3>
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Applied At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in pendingInstructors)
+                        {
+                            <tr>
+                                <td>@p.FullName</td>
+                                <td>@p.Email</td>
+                                
+                                <td>@(p.AppliedAt?.ToString("g") ?? "N/A")</td>
+                               
+                                <td>
+                                    <form method="post" asp-action="ApproveInstructor" asp-controller="Admins" class="d-inline">
+                                        <input type="hidden" name="id" value="@p.PendingInstId" />
+                                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                    </form>
+                                    <form method="post" asp-action="RejectInstructor" asp-controller="Admins" class="d-inline">
+                                        <input type="hidden" name="id" value="@p.PendingInstId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                        }
+                    </tbody>
+                </table>
+            }
+
         </div>
+
     </div>
 
     <script>
@@ -247,6 +303,7 @@
                 }
             }
         }
-    </script>
+
+    </script>   
 </body>
 </html>

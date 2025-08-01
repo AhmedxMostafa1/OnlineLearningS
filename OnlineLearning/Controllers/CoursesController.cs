@@ -18,12 +18,28 @@ namespace OnlineLearning.Controllers
             _context = context;
         }
 
-        // GET: Courses
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchQuery, int? categoryId)
         {
             var courses = _context.Courses
                 .Include(c => c.Instructor)
-                .Include(c => c.Category);
+                .Include(c => c.Category)
+                .Include(c => c.Enrollments)
+                
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                courses = courses.Where(c =>
+                    c.CourseTitle.Contains(searchQuery) ||
+                    c.Category.CategName.Contains(searchQuery));
+            }
+
+            if (categoryId.HasValue)
+            {
+                courses = courses.Where(c => c.CategoryId == categoryId.Value);
+            }
+
+            ViewBag.Categories = await _context.Categories.ToListAsync();
             return View(await courses.ToListAsync());
         }
 
@@ -37,9 +53,10 @@ namespace OnlineLearning.Controllers
             }
 
             var course = await _context.Courses
-                .Include(c => c.Category)
-                .Include(c => c.Instructor)
-                .FirstOrDefaultAsync(m => m.CourseId == id);
+            .Include(c => c.Category)
+            .Include(c => c.Instructor)
+            .Include(c => c.Enrollments)
+            .FirstOrDefaultAsync(m => m.CourseId == id);
             if (course == null)
             {
                 return NotFound();
@@ -51,10 +68,11 @@ namespace OnlineLearning.Controllers
         // GET: Courses/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategId", "CategId");
-            ViewData["InstructorId"] = new SelectList(_context.Instructors, "InstId", "InstId");
+            ViewBag.InstructorId = new SelectList(_context.Instructors, "InstId", "InstFullName");
+            ViewBag.CategoryId = new SelectList(_context.Categories, "CategId", "CategName");
             return View();
         }
+
 
         // POST: Courses/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -75,20 +93,16 @@ namespace OnlineLearning.Controllers
         }
 
         // GET: Courses/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public IActionResult Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var course = await _context.Courses.FindAsync(id);
-            if (course == null)
-            {
-                return NotFound();
-            }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategId", "CategId", course.CategoryId);
-            ViewData["InstructorId"] = new SelectList(_context.Instructors, "InstId", "InstId", course.InstructorId);
+            var course = _context.Courses.Find(id);
+            if (course == null) return NotFound();
+
+            ViewBag.InstructorId = new SelectList(_context.Instructors, "InstId", "InstFullName", course.InstructorId);
+            ViewBag.CategoryId = new SelectList(_context.Categories, "CategId", "CategName", course.CategoryId);
+
             return View(course);
         }
 
@@ -124,8 +138,8 @@ namespace OnlineLearning.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategId", "CategId", course.CategoryId);
-            ViewData["InstructorId"] = new SelectList(_context.Instructors, "InstId", "InstId", course.InstructorId);
+            ViewBag.InstructorId = new SelectList(_context.Instructors, "InstId", "InstFullName", course.InstructorId);
+            ViewBag.CategoryId = new SelectList(_context.Categories, "CategoId", "CategName", course.CategoryId);
             return View(course);
         }
 
@@ -169,29 +183,79 @@ namespace OnlineLearning.Controllers
             return _context.Courses.Any(e => e.CourseId == id);
         }
 
-        public async Task<IActionResult> MyCourses()
+        public IActionResult MyCourses()
         {
             var role = HttpContext.Session.GetString("UserRole");
-            if (role != "Instructor")
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (role == "Instructor")
             {
-                return RedirectToAction("Login", "Account");
+                var instructorCourses = _context.Courses
+                    .Where(c => c.InstructorId == userId)
+                    .Include(c => c.Category)
+                    .ToList();
+
+                return View("MyCourses", instructorCourses);
+            }
+            else if (role == "Student")
+            {
+                var enrolledCourses = _context.Enrollments
+                    .Where(e => e.StudentId == userId)
+                    .Include(e => e.Course)                     // Include Course first
+                        .ThenInclude(c => c.Category)           // Then include Category
+                    .Select(e => e.Course)                      // Now project Course
+                    .ToList();
+
+                return View("MyCourses", enrolledCourses);
             }
 
-            int? instructorId = HttpContext.Session.GetInt32("UserId");
 
-            // Check if user is logged in and is an instructor
-            if (HttpContext.Session.GetString("UserRole") != "Instructor" || instructorId == null)
-            {
-                return RedirectToAction("Login", "Account"); // Redirect unauthorized access
-            }
-
-            // Filter courses to only those created by the logged-in instructor
-            var myCourses = _context.Courses
-                .Include(c => c.Category) // Include related Category data
-                .Where(c => c.InstructorId == instructorId);
-
-            return View(await myCourses.ToListAsync()); // Send filtered data to View
+            return RedirectToAction("Index", "Home"); // Fallback
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Enroll(int courseId)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            var studentId = HttpContext.Session.GetInt32("UserId");
+
+            if (role != "Student" || studentId == null)
+            {
+                TempData["Alert"] = "You must be a logged-in student to enroll.";
+                return RedirectToAction("Details", new { id = courseId });
+            }
+
+            var course = await _context.Courses
+                .Include(c => c.Enrollments)
+                .FirstOrDefaultAsync(c => c.CourseId == courseId);
+            if (course == null)
+                return NotFound();
+
+            bool alreadyEnrolled = course.Enrollments.Any(e => e.StudentId == studentId.Value);
+            if (alreadyEnrolled)
+            {
+                TempData["Message"] = "You are already enrolled in this course.";
+                return RedirectToAction("Details", new { id = courseId });
+            }
+
+            if (course.IsPremium == true)
+            {
+                TempData["Alert"] = "This is a premium course. Please complete payment before enrolling.";
+                return RedirectToAction("Details", new { id = courseId });
+            }
+
+            var enrollment = new Enrollment
+            {
+                CourseId = courseId,
+                StudentId = studentId.Value,
+                // EnrollDate and CompletionStatus rely on DB defaults if configured
+            };
+            _context.Enrollments.Add(enrollment);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Successfully enrolled in the course.";
+            return RedirectToAction("MyCourses");
+        }
     }
 }

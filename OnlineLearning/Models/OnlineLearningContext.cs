@@ -33,13 +33,15 @@ public partial class OnlineLearningContext : DbContext
 
     public virtual DbSet<Payment> Payments { get; set; }
 
+    public virtual DbSet<PendingInstructor> PendingInstructors { get; set; }
+
     public virtual DbSet<Quiz> Quizzes { get; set; }
 
     public virtual DbSet<Student> Students { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-
-        => optionsBuilder.UseSqlServer("Server=desktop-uv4h5kf\\SQLEXPRESS;Database=OnlineLearning;Trusted_Connection=True;TrustServerCertificate=True;");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=desktop-uv4h5kf\\SQLEXPRESS;Database=OnlineLearning;Trusted_Connection=True;TrustServerCertificate=True;Encrypt=False;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -146,6 +148,9 @@ public partial class OnlineLearningContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("Inst_FullName");
             entity.Property(e => e.InstPassword).HasColumnName("Inst_Password");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("Activated");
         });
 
         modelBuilder.Entity<Lesson>(entity =>
@@ -199,6 +204,20 @@ public partial class OnlineLearningContext : DbContext
                 .HasConstraintName("FK__Payments__Studen__72C60C4A");
         });
 
+        modelBuilder.Entity<PendingInstructor>(entity =>
+        {
+            entity.HasKey(e => e.PendingInstId).HasName("PK__PendingI__D8536AC816F08A68");
+
+            entity.HasIndex(e => e.Email, "UQ__PendingI__A9D10534A1AA0A0E").IsUnique();
+
+            entity.Property(e => e.PendingInstId).HasColumnName("PendingInst_Id");
+            entity.Property(e => e.AppliedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.FullName).HasMaxLength(100);
+        });
+
         modelBuilder.Entity<Quiz>(entity =>
         {
             entity.HasKey(e => e.QuizId).HasName("PK__Quizzes__10974DAA54FCB1AE");
@@ -225,6 +244,9 @@ public partial class OnlineLearningContext : DbContext
             entity.HasIndex(e => e.StuEmail, "UQ__Students__4DB502FB611F9922").IsUnique();
 
             entity.Property(e => e.StuId).HasColumnName("Stu_Id");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("Activated");
             entity.Property(e => e.StuEmail)
                 .HasMaxLength(100)
                 .HasColumnName("Stu_Email");

@@ -25,15 +25,7 @@
                             <input type="password" id="password" name="password" class="form-control" required />
                         </div>
 
-                        <div class="mb-3">
-                            <label for="role" class="form-label">Role</label>
-                            <select id="role" name="role" class="form-select" required>
-                                <option value="">-- Select Role --</option>
-                                <option value="Student">Student</option>
-                                <option value="Instructor">Instructor</option>
-                                <option value="Admin">Admin</option>
-                            </select>
-                        </div>
+                   
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">Register</button>
@@ -54,7 +46,9 @@
     <div class="container">
         <div class="row">
             <div class="col text-center">
-                <button class="btn btn-default">Join Us Today</button>
+                <a asp-controller="Account" asp-action="JoinUs" class="btn btn-danger mt-3">Join Us Today</a>
+
+
             </div>
         </div>  
     </div>
