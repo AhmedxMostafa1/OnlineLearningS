@@ -153,9 +153,10 @@
                                             {
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     <span>@lesson.LessonTitle</span>
-                                                    @if (lesson.Type == "video")
+                                                    @if (string.Equals(lesson.Type, "video", StringComparison.OrdinalIgnoreCase))
                                                     {
-                                                        <a href="@lesson.LessonContentUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <a asp-controller="Lessons" asp-action="WatchVideo" asp-route-lessonId="@lesson.LessonId"
+                                                           class="btn btn-sm btn-outline-primary">
                                                             🎥 Watch Video
                                                         </a>
                                                     }

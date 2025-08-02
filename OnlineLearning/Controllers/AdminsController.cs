@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OnlineLearning.Models;
-using System.Linq;
 
 public class AdminsController : Controller
 {
@@ -11,154 +13,206 @@ public class AdminsController : Controller
     {
         _context = context;
     }
-
-    public IActionResult Dashboard(string searchBy, string searchTerm, string userType, string section = "summary")
+    private IActionResult? EnsureAdmin()
     {
-        var students = _context.Students.ToList();
-        var instructors = _context.Instructors.ToList();
-        var courses = _context.Courses.ToList();
-        
-
-        //search logic
-        if (!string.IsNullOrEmpty(searchTerm))
+        var role = HttpContext.Session.GetString("UserRole");
+        if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
         {
-            if (userType == "Student")
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login", "Account");
+        }
+        return null;
+    }
+
+    // Dashboard with optional filtering and section selection
+    public async Task<IActionResult> Dashboard(string searchBy, string searchTerm, string userType, string section = "summary")
+    {   //check if admin
+        var guard = EnsureAdmin();
+        if (guard != null) return guard;
+
+        // Base queries (deferred execution)
+        IQueryable<Student> studentQuery = _context.Students;
+        IQueryable<Instructor> instructorQuery = _context.Instructors;
+
+        // Search filtering
+        if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(userType))
+        {
+            string term = searchTerm.Trim();
+            if (userType.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
-                students = students.Where(s =>
-                    (searchBy == "Id" && s.StuId.ToString() == searchTerm) ||
-                    (searchBy == "Name" && s.StuFullName.ToLower().Contains(searchTerm.ToLower()))
-                ).ToList();
+                if (searchBy == "Id" && int.TryParse(term, out int sid))
+                {
+                    studentQuery = studentQuery.Where(s => s.StuId == sid);
+                }
+                else if (searchBy == "Name")
+                {
+                    studentQuery = studentQuery.Where(s => EF.Functions.Like(s.StuFullName, $"%{term}%"));
+                }
             }
-            else if (userType == "Instructor")
+            else if (userType.Equals("Instructor", StringComparison.OrdinalIgnoreCase))
             {
-                instructors = instructors.Where(i =>
-                    (searchBy == "Id" && i.InstId.ToString() == searchTerm) ||
-                    (searchBy == "Name" && i.InstFullName.ToLower().Contains(searchTerm.ToLower()))
-                ).ToList();
+                if (searchBy == "Id" && int.TryParse(term, out int iid))
+                {
+                    instructorQuery = instructorQuery.Where(i => i.InstId == iid);
+                }
+                else if (searchBy == "Name")
+                {
+                    instructorQuery = instructorQuery.Where(i => EF.Functions.Like(i.InstFullName, $"%{term}%"));
+                }
             }
         }
+
+        // Materialize only what’s needed
+        var students = await studentQuery.ToListAsync();
+        var instructors = await instructorQuery.ToListAsync();
+
+        // Section-specific data
         if (section == "requests")
         {
-            var pending = _context.PendingInstructors.ToList();
+            var pending = await _context.PendingInstructors.ToListAsync();
             ViewBag.PendingInstructors = pending;
         }
-
 
         ViewBag.Section = section;
         ViewBag.UserType = userType;
         ViewBag.Students = students;
         ViewBag.Instructors = instructors;
-        ViewBag.TotalStudents = _context.Students.Count();
-        ViewBag.TotalInstructors = _context.Instructors.Count();
-        ViewBag.TotalCourses = _context.Courses.Count();
+
+        // Summary counts (could be optimized/cached if scale demands)
+        ViewBag.TotalStudents = await _context.Students.CountAsync();
+        ViewBag.TotalInstructors = await _context.Instructors.CountAsync();
+        ViewBag.TotalCourses = await _context.Courses.CountAsync();
 
         return View();
     }
-    //todo reAdd this fucnction
-    public IActionResult StudentDetails(int id)
+
+    public async Task<IActionResult> StudentDetails(int id)
     {
-        var student = _context.Students.Find(id);
+        var student = await _context.Students.FindAsync(id);
         if (student == null) return NotFound();
 
-        var enrollments = _context.Enrollments
+        var enrollments = await _context.Enrollments
             .Where(e => e.StudentId == id)
             .Select(e => new
             {
                 e.EnrId,
                 e.CourseId,
                 Course = e.Course
-            }).ToList();
+            })
+            .ToListAsync();
 
-        ViewBag.AllCourses = _context.Courses.ToList(); // for add option
+        ViewBag.AllCourses = await _context.Courses.ToListAsync();
         ViewBag.Enrollments = enrollments;
         return View(student);
     }
-    
 
-
-    public IActionResult InstructorDetails(int id)
+    public async Task<IActionResult> InstructorDetails(int id)
     {
-        var instructor = _context.Instructors.Find(id);
+        var instructor = await _context.Instructors.FindAsync(id);
         if (instructor == null) return NotFound();
 
-        var courses = _context.Courses
+        var courses = await _context.Courses
             .Where(c => c.InstructorId == id)
-            .ToList();
+            .ToListAsync();
 
-        ViewBag.AllCourses = _context.Courses.ToList(); // for assigning new courses
+        ViewBag.AllCourses = await _context.Courses.ToListAsync();
         ViewBag.Courses = courses;
         return View(instructor);
     }
-    //
-
 
     [HttpPost]
-    public IActionResult RemoveEnrollment(int enrId, int studentId)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveEnrollment(int enrId, int studentId)
     {
-        var enrollment = _context.Enrollments.Find(enrId);
+        var enrollment = await _context.Enrollments.FindAsync(enrId);
         if (enrollment != null)
         {
             _context.Enrollments.Remove(enrollment);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
-        return RedirectToAction("StudentDetails", new { id = studentId });
+        return RedirectToAction(nameof(StudentDetails), new { id = studentId });
     }
 
- 
     [HttpPost]
-    public IActionResult ApproveInstructor(int id)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveInstructor(int id)
     {
-        var pending = _context.PendingInstructors.Find(id);
+        var pending = await _context.PendingInstructors.FindAsync(id);
         if (pending != null)
         {
+            string normalizedEmail = pending.Email?.Trim().ToLowerInvariant() ?? "";
+
+            bool emailConflict = await _context.Students.AnyAsync(s => s.StuEmail.ToLower() == normalizedEmail)
+                                 || await _context.Instructors.AnyAsync(i => i.InstEmail.ToLower() == normalizedEmail)
+                                 || await _context.Admins.AnyAsync(a => a.AdminEmail.ToLower() == normalizedEmail);
+
+            if (emailConflict)
+            {
+                TempData["Error"] = "Email already exists in the system.";
+                return RedirectToAction(nameof(Dashboard), new { section = "requests" });
+            }
+
             var instructor = new Instructor
             {
                 InstFullName = pending.FullName,
-                InstEmail = pending.Email,
-                InstPassword = pending.Password
+                InstEmail = normalizedEmail,
+                InstPassword = pending.Password, // already hashed
+                Status = "Active"
             };
 
             _context.Instructors.Add(instructor);
             _context.PendingInstructors.Remove(pending);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Instructor approved.";
         }
-        return RedirectToAction("Dashboard", new { section = "requests" });
+
+        return RedirectToAction(nameof(Dashboard), new { section = "requests" });
     }
 
     [HttpPost]
-    public IActionResult RejectInstructor(int id)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectInstructor(int id)
     {
-        var pending = _context.PendingInstructors.Find(id);
+        var pending = await _context.PendingInstructors.FindAsync(id);
         if (pending != null)
         {
             _context.PendingInstructors.Remove(pending);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Instructor request rejected.";
         }
-        return RedirectToAction("Dashboard", new { section = "requests" });
+
+        return RedirectToAction(nameof(Dashboard), new { section = "requests" });
     }
+
     [HttpPost]
-    public IActionResult ToggleInstructorStatus(int id)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleInstructorStatus(int id)
     {
-        var instructor = _context.Instructors.FirstOrDefault(i => i.InstId == id);
+        var instructor = await _context.Instructors.FirstOrDefaultAsync(i => i.InstId == id);
         if (instructor != null)
         {
-            instructor.Status = instructor.Status == "Activated" ? "Deactivated" : "Activated";
-            _context.SaveChanges();
+            // Normalize to use consistent status values; here using "Active"/"Deactivated"
+            instructor.Status = string.Equals(instructor.Status, "Active", StringComparison.OrdinalIgnoreCase)
+                ? "Deactivated"
+                : "Active";
+            await _context.SaveChangesAsync();
         }
-        return RedirectToAction("Dashboard", new { section = "instructors" });
+        return RedirectToAction(nameof(Dashboard), new { section = "instructors" });
     }
 
     [HttpPost]
-    public IActionResult ToggleStudentStatus(int id)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStudentStatus(int id)
     {
-        var student = _context.Students.FirstOrDefault(s => s.StuId == id);
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.StuId == id);
         if (student != null)
         {
-            student.Status = student.Status == "Activated" ? "Deactivated" : "Activated";
-            _context.SaveChanges();
+            student.Status = string.Equals(student.Status, "Active", StringComparison.OrdinalIgnoreCase)
+                ? "Deactivated"
+                : "Active";
+            await _context.SaveChangesAsync();
         }
-        return RedirectToAction("Dashboard", new { section = "students" });
+        return RedirectToAction(nameof(Dashboard), new { section = "students" });
     }
-
-
 }
