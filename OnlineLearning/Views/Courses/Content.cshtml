@@ -1,0 +1,99 @@
+﻿@model OnlineLearning.Models.Course
+@{
+    ViewData["Title"] = "Course Content - " + Model.CourseTitle;
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">🎓 @Model.CourseTitle - Content</h2>
+
+    <div class="row">
+        <!-- Modules List (Left Sidebar) -->
+        <div class="col-lg-4 col-md-12" style="max-height: 80vh; overflow-y: auto;">
+            @if (Model.Modules != null && Model.Modules.Any())
+            {
+                <div class="accordion" id="courseContentAccordion">
+                    @foreach (var module in Model.Modules)
+                    {
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-@module.ModuleId">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-@module.ModuleId">
+                                    @module.ModuleTitle
+                                </button>
+                            </h2>
+                            <div id="collapse-@module.ModuleId" class="accordion-collapse collapse"
+                                 data-bs-parent="#courseContentAccordion">
+                                <div class="accordion-body">
+                                    @if (module.Lessons != null && module.Lessons.Any())
+                                    {
+                                        <ul class="list-group">
+                                            @foreach (var lesson in module.Lessons)
+                                            {
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    @lesson.LessonTitle
+                                                    <button class="btn btn-sm btn-outline-primary"
+                                                            onclick="viewLesson(@lesson.LessonId)">
+                                                        View
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No lessons added for this module.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No modules available yet.</p>
+            }
+        </div>
+
+        <!-- Video Player (Right) -->
+        <div class="col-lg-8 col-md-12">
+            <div id="lessonPlayerContainer" style="display:none;">
+                <h4 id="lessonTitle" class="mb-3"></h4>
+                <div id="lessonContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function viewLesson(lessonId) {
+            fetch(`/Lessons/ViewLesson/${lessonId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error("Unable to load lesson.");
+                    return response.json();
+                })
+                .then(data => {
+                    const playerContainer = document.getElementById("lessonPlayerContainer");
+                    const titleElement = document.getElementById("lessonTitle");
+                    const contentElement = document.getElementById("lessonContent");
+
+                    playerContainer.style.display = "block";
+                    titleElement.innerText = data.title;
+                    contentElement.innerHTML = "";
+
+                    if (data.type === "video") {
+                        contentElement.innerHTML = `
+                                    <div class="ratio ratio-16x9">
+                                        <iframe src="${data.url}" allowfullscreen class="border-0 rounded-3"></iframe>
+                                    </div>`;
+                    }
+                    else if (data.type === "pdf") {
+                        contentElement.innerHTML = `
+                                    <iframe src="${data.url}" width="100%" height="600px" class="border rounded"></iframe>`;
+                    }
+                })
+                .catch(error => alert(error.message));
+        }
+    </script>
+}

@@ -73,7 +73,8 @@ namespace OnlineLearning.Controllers
             ViewBag.ModuleId = lesson.ModuleId;
             return View(lesson);
         }
-        public async Task<IActionResult> WatchVideo(int lessonId)
+        [HttpGet]
+        public async Task<IActionResult> ViewLesson(int id)
         {
             var role = HttpContext.Session.GetString("UserRole");
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -82,7 +83,7 @@ namespace OnlineLearning.Controllers
                 .Include(l => l.Module)
                     .ThenInclude(m => m.Course)
                         .ThenInclude(c => c.Enrollments)
-                .FirstOrDefaultAsync(l => l.LessonId == lessonId);
+                .FirstOrDefaultAsync(l => l.LessonId == id);
 
             if (lesson == null)
                 return NotFound();
@@ -91,42 +92,31 @@ namespace OnlineLearning.Controllers
             if (course == null)
                 return BadRequest("Associated course not found.");
 
-            // Authorization: instructor of the course or enrolled student
             bool canView = false;
             if (role == "Instructor" && course.InstructorId == userId)
-            {
                 canView = true;
-            }
             else if (role == "Student" && userId.HasValue)
-            {
                 canView = course.Enrollments.Any(e => e.StudentId == userId.Value);
-            }
 
             if (!canView)
+                return Unauthorized("You are not authorized to view this lesson.");
+
+            if (lesson.Type == "video")
             {
-                TempData["Alert"] = "You are not authorized to view this video.";
-                return RedirectToAction("Details", "Courses", new { id = course.CourseId });
+                var videoId = ExtractYouTubeId(lesson.LessonContentUrl);
+                if (string.IsNullOrEmpty(videoId))
+                    return BadRequest("Invalid or unsupported YouTube URL.");
+
+                return Json(new { type = "video", title = lesson.LessonTitle, url = $"https://www.youtube.com/embed/{videoId}" });
+            }
+            else if (lesson.Type == "pdf")
+            {
+                return Json(new { type = "pdf", title = lesson.LessonTitle, url = lesson.LessonContentUrl });
             }
 
-            if (!string.Equals(lesson.Type, "video", StringComparison.OrdinalIgnoreCase))
-            {
-                TempData["Alert"] = "Requested lesson is not a video.";
-                return RedirectToAction("Details", "Courses", new { id = course.CourseId });
-            }
-
-            var videoId = ExtractYouTubeId(lesson.LessonContentUrl);
-            if (string.IsNullOrEmpty(videoId))
-            {
-                TempData["Alert"] = "Invalid or unsupported YouTube URL.";
-                return RedirectToAction("Details", "Courses", new { id = course.CourseId });
-            }
-
-            ViewBag.EmbedUrl = $"https://www.youtube.com/embed/{videoId}";
-            ViewBag.CourseId = course.CourseId;
-            ViewBag.CanView = true;
-
-            return View(lesson);
+            return BadRequest("Unsupported lesson type.");
         }
+
 
         private string? ExtractYouTubeId(string url)
         {
@@ -138,5 +128,76 @@ namespace OnlineLearning.Controllers
             var match = regex.Match(url);
             return match.Success ? match.Groups[1].Value : null;
         }
+        // GET: Lessons/Edit
+        public IActionResult Edit(int id)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "Instructor")
+                return Unauthorized();
+
+            var lesson = _context.Lessons
+                .Include(l => l.Module)
+                .FirstOrDefault(l => l.LessonId == id);
+
+            if (lesson == null) return NotFound();
+
+            ViewBag.ModuleTitle = lesson.Module.ModuleTitle;
+            return View(lesson);
+        }
+
+
+        // POST: Lessons/Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(Lesson lesson)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "Instructor")
+                return Unauthorized();
+
+            if (ModelState.IsValid)
+            {
+                _context.Lessons.Update(lesson);
+                _context.SaveChanges();
+                return RedirectToAction("Index", new { moduleId = lesson.ModuleId });
+            }
+
+            return View(lesson);
+        }
+        // GET: Lessons/Delete
+        public IActionResult Delete(int id)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "Instructor")
+                return Unauthorized();
+
+            var lesson = _context.Lessons
+                .Include(l => l.Module)
+                .FirstOrDefault(l => l.LessonId == id);
+
+            if (lesson == null) return NotFound();
+
+            return View(lesson);
+        }
+
+        // POST: Lessons/Delete
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteConfirmed(int id)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "Instructor")
+                return Unauthorized();
+
+            var lesson = _context.Lessons.FirstOrDefault(l => l.LessonId == id);
+            if (lesson == null) return NotFound();
+
+            var moduleId = lesson.ModuleId;
+            _context.Lessons.Remove(lesson);
+            _context.SaveChanges();
+
+            return RedirectToAction("Index", new { moduleId });
+        }
+
     }
 }

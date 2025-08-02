@@ -260,5 +260,30 @@ namespace OnlineLearning.Controllers
             TempData["Success"] = "Successfully enrolled in the course.";
             return RedirectToAction("MyCourses");
         }
+        public async Task<IActionResult> Content(int id)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            var studentId = HttpContext.Session.GetInt32("UserId");
+
+            var course = await _context.Courses
+                .Include(c => c.Modules)
+                    .ThenInclude(m => m.Lessons)
+                .FirstOrDefaultAsync(c => c.CourseId == id);
+
+            if (course == null)
+                return NotFound();
+
+            bool isEnrolled = role == "Student" &&
+                              _context.Enrollments.Any(e => e.CourseId == id && e.StudentId == studentId);
+
+            if (!isEnrolled && role == "Student")
+            {
+                TempData["Alert"] = "You must enroll in this course to view its content.";
+                return RedirectToAction("Details", new { id });
+            }
+
+            return View(course);
+        }
+
     }
 }

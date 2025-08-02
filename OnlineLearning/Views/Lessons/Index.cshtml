@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Lessons for " + ViewBag.ModuleTitle;
+    var role = Context.Session.GetString("UserRole");
 }
 
 <h2>📖 Lessons for @ViewBag.ModuleTitle</h2>
@@ -16,6 +17,10 @@
             <th>Title</th>
             <th>Type</th>
             <th>Content</th>
+            @if (role == "Instructor")
+            {
+                <th>Actions</th>
+            }
         </tr>
     </thead>
     <tbody>
@@ -34,6 +39,18 @@
                         <a href="@lesson.LessonContentUrl" target="_blank" class="btn btn-sm btn-secondary">View PDF</a>
                     }
                 </td>
+
+                @if (role == "Instructor")
+                {
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@lesson.LessonId" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@lesson.LessonId" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </td>
+                }
             </tr>
         }
     </tbody>
