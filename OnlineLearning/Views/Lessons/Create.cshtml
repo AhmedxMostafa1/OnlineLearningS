@@ -1,0 +1,31 @@
+﻿@model OnlineLearning.Models.Lesson
+
+<h2>➕ Add Lesson for @ViewBag.ModuleTitle</h2>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" asp-for="ModuleId" />
+
+    <div class="mb-3">
+        <label asp-for="LessonTitle" class="form-label"></label>
+        <input asp-for="LessonTitle" class="form-control" />
+        <span asp-validation-for="LessonTitle" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label">Lesson Type</label>
+        <select asp-for="Type" class="form-select">
+            <option value="video">Video</option>
+            <option value="pdf">PDF</option>
+        </select>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="LessonContentUrl" class="form-label">Content URL (Video or PDF)</label>
+        <input asp-for="LessonContentUrl" class="form-control" />
+        <span asp-validation-for="LessonContentUrl" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Lesson</button>
+    <a asp-action="Index" asp-route-moduleId="@ViewBag.ModuleId" class="btn btn-secondary">Back</a>
+</form>

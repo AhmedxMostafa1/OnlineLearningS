@@ -1,0 +1,40 @@
+﻿@model IEnumerable<OnlineLearning.Models.Lesson>
+
+@{
+    ViewData["Title"] = "Lessons for " + ViewBag.ModuleTitle;
+}
+
+<h2>📖 Lessons for @ViewBag.ModuleTitle</h2>
+
+<a asp-action="Create" asp-route-moduleId="@ViewBag.ModuleId" class="btn btn-primary mb-3">
+    ➕ Add Lesson
+</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Content</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var lesson in Model)
+        {
+            <tr>
+                <td>@lesson.LessonTitle</td>
+                <td>@lesson.Type</td>
+                <td>
+                    @if (lesson.Type == "video")
+                    {
+                        <a href="@lesson.LessonContentUrl" target="_blank" class="btn btn-sm btn-info">Watch Video</a>
+                    }
+                    else
+                    {
+                        <a href="@lesson.LessonContentUrl" target="_blank" class="btn btn-sm btn-secondary">View PDF</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

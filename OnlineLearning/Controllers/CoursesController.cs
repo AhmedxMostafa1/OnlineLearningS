@@ -53,10 +53,13 @@ namespace OnlineLearning.Controllers
             }
 
             var course = await _context.Courses
-            .Include(c => c.Category)
-            .Include(c => c.Instructor)
-            .Include(c => c.Enrollments)
-            .FirstOrDefaultAsync(m => m.CourseId == id);
+                .Include(c => c.Category)
+                .Include(c => c.Instructor)
+                .Include(c => c.Enrollments)
+                .Include(c => c.Modules)
+                    .ThenInclude(m => m.Lessons)
+                .FirstOrDefaultAsync(m => m.CourseId == id);
+
             if (course == null)
             {
                 return NotFound();
