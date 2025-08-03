@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using OnlineLearning.Models;
 
 namespace OnlineLearning.Controllers
@@ -82,18 +83,51 @@ namespace OnlineLearning.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CourseId,CourseTitle,CourseDescription,InstructorId,CategoryId,IsPremium,CreatedAt")] Course course)
+        public async Task<IActionResult> Create([Bind("CourseTitle,CourseDescription,CategoryId,IsPremium")] Course course)
         {
-            if (ModelState.IsValid)
+            ViewBag.CategoryId = new SelectList(_context.Categories, "CategId", "CategName", course.CategoryId);
+
+
+
+            var instructorId = HttpContext.Session.GetInt32("UserId");
+
+            if (instructorId == null || HttpContext.Session.GetString("UserRole") != "Instructor")
             {
-                _context.Add(course);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+                return Unauthorized();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategId", "CategId", course.CategoryId);
-            ViewData["InstructorId"] = new SelectList(_context.Instructors, "InstId", "InstId", course.InstructorId);
-            return View(course);
+
+            if (string.IsNullOrWhiteSpace(course.CourseTitle))
+            {
+                ModelState.AddModelError("CourseTitle", "Course title is required.");
+            }
+            if (string.IsNullOrWhiteSpace(course.CourseDescription))
+            {
+                ModelState.AddModelError("CourseDescription", "Course description is required.");
+            }
+            if (course.CategoryId <= 0)
+            {
+                ModelState.AddModelError("CategoryId", "Please select a category.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(course); // Return to form with error messages
+            }
+
+            course.InstructorId = instructorId.Value;
+            course.CreatedAt = DateTime.Now;
+
+            _context.Add(course);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("MyCourses","Courses");
+
+
+
+            
         }
+
 
         // GET: Courses/Edit/5
         public IActionResult Edit(int? id)
@@ -114,13 +148,33 @@ namespace OnlineLearning.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CourseId,CourseTitle,CourseDescription,InstructorId,CategoryId,IsPremium,CreatedAt")] Course course)
+        public async Task<IActionResult> Edit(int id, [Bind("CourseId,CourseTitle,CourseDescription,CategoryId,IsPremium")] Course course)
+            
         {
+            course.InstructorId = HttpContext.Session.GetInt32("UserId");
+
+
             if (id != course.CourseId)
             {
                 return NotFound();
             }
+            if (string.IsNullOrWhiteSpace(course.CourseTitle))
+            {
+                ModelState.AddModelError("CourseTitle", "Course title is required.");
+            }
+            if (string.IsNullOrWhiteSpace(course.CourseDescription))
+            {
+                ModelState.AddModelError("CourseDescription", "Course description is required.");
+            }
+            if (course.CategoryId <= 0)
+            {
+                ModelState.AddModelError("CategoryId", "Please select a category.");
+            }
 
+            if (!ModelState.IsValid)
+            {
+                return View(course); // Return to form with error messages
+            }
             if (ModelState.IsValid)
             {
                 try
@@ -139,7 +193,7 @@ namespace OnlineLearning.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("MyCourses","Courses");
             }
             ViewBag.InstructorId = new SelectList(_context.Instructors, "InstId", "InstFullName", course.InstructorId);
             ViewBag.CategoryId = new SelectList(_context.Categories, "CategoId", "CategName", course.CategoryId);

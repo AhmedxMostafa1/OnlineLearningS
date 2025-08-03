@@ -157,7 +157,7 @@ public class AdminsController : Controller
                 InstFullName = pending.FullName,
                 InstEmail = normalizedEmail,
                 InstPassword = pending.Password, // already hashed
-                Status = "Active"
+                Status = "Activated"
             };
 
             _context.Instructors.Add(instructor);
@@ -193,9 +193,9 @@ public class AdminsController : Controller
         if (instructor != null)
         {
             // Normalize to use consistent status values; here using "Active"/"Deactivated"
-            instructor.Status = string.Equals(instructor.Status, "Active", StringComparison.OrdinalIgnoreCase)
+            instructor.Status = string.Equals(instructor.Status, "Activated", StringComparison.OrdinalIgnoreCase)
                 ? "Deactivated"
-                : "Active";
+                : "Activated";
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Dashboard), new { section = "instructors" });
@@ -208,9 +208,9 @@ public class AdminsController : Controller
         var student = await _context.Students.FirstOrDefaultAsync(s => s.StuId == id);
         if (student != null)
         {
-            student.Status = string.Equals(student.Status, "Active", StringComparison.OrdinalIgnoreCase)
+            student.Status = string.Equals(student.Status, "Activated", StringComparison.OrdinalIgnoreCase)
                 ? "Deactivated"
-                : "Active";
+                : "Activated";
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Dashboard), new { section = "students" });

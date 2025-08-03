@@ -62,17 +62,24 @@ namespace OnlineLearning.Controllers
             {
                 return Unauthorized();
             }
-
-            if (ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(module.ModuleTitle))
             {
+                ModelState.AddModelError("ModuleTitle", "Module title is required.");
+            }
+            
+
+            if (!ModelState.IsValid)
+            {
+                return View(module); // Return to form with error messages
+            }
+
+            
                 _context.Modules.Add(module);
                 _context.SaveChanges();
                 return RedirectToAction("Index", new { courseId = module.CourseId });
-            }
+            
 
-            var course = _context.Courses.Find(module.CourseId);
-            ViewBag.CourseTitle = course?.CourseTitle;
-            return View(module);
+            
         }
 
         // GET: Edit Module
@@ -81,6 +88,7 @@ namespace OnlineLearning.Controllers
             var role = HttpContext.Session.GetString("UserRole");
             if (role != "Instructor")
             {
+                
                 return Unauthorized();
             }
 

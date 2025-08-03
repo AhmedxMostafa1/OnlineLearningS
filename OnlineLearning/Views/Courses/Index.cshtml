@@ -27,12 +27,7 @@
     </div>
 </form>
 
-@if (role == "Instructor" || role == "Admin")
-{
-    <div class="mb-4 text-end">
-        <a asp-action="Create" class="btn btn-primary">➕ Create New Course</a>
-    </div>
-}
+
 
 <!-- 📦 Course Cards -->
 <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -77,13 +72,7 @@
                             }
                         }
 
-                        @if (role == "Admin")
-                        {
-                            <div class="d-flex justify-content-between">
-                                <a asp-action="Edit" asp-route-id="@course.CourseId" class="btn btn-warning btn-sm">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@course.CourseId" class="btn btn-danger btn-sm">Delete</a>
-                            </div>
-                        }
+                        
                     </div>
                 </div>
             </div>

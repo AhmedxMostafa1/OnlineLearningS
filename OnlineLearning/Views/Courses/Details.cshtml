@@ -5,6 +5,7 @@
     var role = Context.Session.GetString("UserRole");
     var studentId = Context.Session.GetInt32("UserId");
     bool isEnrolled = false;
+    
 
     if (role == "Student" && studentId.HasValue)
     {
@@ -110,20 +111,15 @@
                     </a>
                 }
 
-                @if (role != "Student")
-                {
-                    <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@Model.CourseId">
-                        <i class="bi bi-pencil-square me-1"></i> Edit
-                    </a>
 
-                    @if (role == "Instructor")
+                    @if (role == "Instructor" && studentId==Model.InstructorId)
                     {
                         <a asp-controller="Modules" asp-action="Index" asp-route-courseId="@Model.CourseId"
                            class="btn btn-outline-primary">
                             <i class="bi bi-list-task"></i> Manage Modules
                         </a>
                     }
-                }
+                
             </div>
         </div>
     </div>

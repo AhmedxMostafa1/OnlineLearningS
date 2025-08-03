@@ -16,27 +16,31 @@
             <input type="hidden" asp-for="LessonId" />
             <input type="hidden" asp-for="ModuleId" />
 
+            <!-- Lesson Title -->
             <div class="form-group mb-3">
                 <label asp-for="LessonTitle" class="control-label"></label>
                 <input asp-for="LessonTitle" class="form-control" />
                 <span asp-validation-for="LessonTitle" class="text-danger"></span>
             </div>
 
+            <!-- Lesson Content URL -->
             <div class="form-group mb-3">
                 <label asp-for="LessonContentUrl" class="control-label"></label>
                 <input asp-for="LessonContentUrl" class="form-control" />
                 <span asp-validation-for="LessonContentUrl" class="text-danger"></span>
             </div>
 
+            <!-- Lesson Type -->
             <div class="form-group mb-3">
                 <label asp-for="Type" class="control-label"></label>
                 <select asp-for="Type" class="form-control">
-                    <option value="video" selected="@Model.Type == " video"">Video</option>
-                    <option value="pdf" selected="@Model.Type == " pdf"">PDF</option>
+                    <option value="video">Video</option>
+                    <option value="pdf">PDF</option>
                 </select>
                 <span asp-validation-for="Type" class="text-danger"></span>
             </div>
 
+            <!-- Actions -->
             <div class="form-group mt-3">
                 <input type="submit" value="Save" class="btn btn-primary" />
                 <a asp-action="Index" asp-route-moduleId="@Model.ModuleId" class="btn btn-secondary">Back to Lessons</a>

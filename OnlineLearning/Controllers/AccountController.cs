@@ -55,7 +55,10 @@ public class AccountController : Controller
         _context.Students.Add(student);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Login");
+        HttpContext.Session.SetString("UserRole", "Student");
+        HttpContext.Session.SetInt32("UserId", student.StuId);
+
+        return RedirectToAction("Index","Home");
     }
 
     private static bool IsBcryptHash(string pwd) =>
@@ -131,7 +134,7 @@ public class AccountController : Controller
             {
                 HttpContext.Session.SetString("UserRole", "Instructor");
                 HttpContext.Session.SetInt32("UserId", instructor.InstId);
-                return RedirectToAction("Index", "Courses");
+                return RedirectToAction("Mycourses", "Courses");
             }
         }
 

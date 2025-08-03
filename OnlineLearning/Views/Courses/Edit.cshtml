@@ -28,13 +28,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="InstructorId" class="form-label fw-bold"></label>
-                        <select asp-for="InstructorId" class="form-select" asp-items="ViewBag.InstructorId">
-                            <option disabled selected>-- Select Instructor --</option>
-                        </select>
-                        <span asp-validation-for="InstructorId" class="text-danger"></span>
-                    </div>
+
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="CategoryId" class="form-label fw-bold"></label>
@@ -56,11 +50,7 @@
                 </div>
 
 
-                <div class="mb-3">
-                    <label asp-for="CreatedAt" class="form-label fw-bold"></label>
-                    <input asp-for="CreatedAt" type="datetime-local" class="form-control" />
-                    <span asp-validation-for="CreatedAt" class="text-danger"></span>
-                </div>
+                
 
                 <button type="submit" class="btn btn-success px-4">
                     <i class="fas fa-save me-2"></i>Save Changes

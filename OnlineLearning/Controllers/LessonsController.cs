@@ -55,24 +55,49 @@ namespace OnlineLearning.Controllers
         // POST: Create Lesson
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Lesson lesson)
+        public async Task<IActionResult> Create([Bind("LessonTitle,LessonContentUrl,Type,ModuleId")] Lesson lesson)
         {
+            ViewBag.ModuleId = lesson.ModuleId;
+
             var role = HttpContext.Session.GetString("UserRole");
             if (role != "Instructor")
             {
                 return Unauthorized();
             }
 
-            if (ModelState.IsValid)
+            // Title validation
+            if (string.IsNullOrWhiteSpace(lesson.LessonTitle))
             {
-                _context.Lessons.Add(lesson);
-                _context.SaveChanges();
-                return RedirectToAction("Index", new { moduleId = lesson.ModuleId });
+                ModelState.AddModelError("LessonTitle", "Lesson title is required.");
             }
 
-            ViewBag.ModuleId = lesson.ModuleId;
-            return View(lesson);
+            // URL validation
+            if (string.IsNullOrWhiteSpace(lesson.LessonContentUrl))
+            {
+                ModelState.AddModelError("LessonContentUrl", "Lesson URL is required.");
+            }
+            else
+            {
+                var urlRegex = new Regex(@"^(https?:\/\/|ftp:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?(\/[^\s]*)?$");
+                if (!urlRegex.IsMatch(lesson.LessonContentUrl))
+                {
+                    ModelState.AddModelError("LessonContentUrl", "Please enter a valid URL starting with http:// or https://");
+                }
+            }
+
+            // If validation fails, return the form with errors
+            if (!ModelState.IsValid)
+            {
+                return View(lesson);
+            }
+
+            // Save lesson if valid
+            _context.Lessons.Add(lesson);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", new { moduleId = lesson.ModuleId });
         }
+
         [HttpGet]
         public async Task<IActionResult> ViewLesson(int id)
         {
@@ -137,11 +162,13 @@ namespace OnlineLearning.Controllers
 
             var lesson = _context.Lessons
                 .Include(l => l.Module)
+                
                 .FirstOrDefault(l => l.LessonId == id);
 
             if (lesson == null) return NotFound();
 
             ViewBag.ModuleTitle = lesson.Module.ModuleTitle;
+            
             return View(lesson);
         }
 
@@ -149,21 +176,45 @@ namespace OnlineLearning.Controllers
         // POST: Lessons/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Lesson lesson)
+        public async Task<IActionResult> Edit([Bind("LessonId,LessonTitle,LessonContentUrl,Type,ModuleId")] Lesson lesson)
         {
             var role = HttpContext.Session.GetString("UserRole");
             if (role != "Instructor")
-                return Unauthorized();
-
-            if (ModelState.IsValid)
             {
-                _context.Lessons.Update(lesson);
-                _context.SaveChanges();
-                return RedirectToAction("Index", new { moduleId = lesson.ModuleId });
+                return Unauthorized();
             }
 
-            return View(lesson);
+            // Title validation
+            if (string.IsNullOrWhiteSpace(lesson.LessonTitle))
+            {
+                ModelState.AddModelError("LessonTitle", "Lesson title is required.");
+            }
+
+            // URL validation
+            if (string.IsNullOrWhiteSpace(lesson.LessonContentUrl))
+            {
+                ModelState.AddModelError("LessonContentUrl", "Lesson URL is required.");
+            }
+            else
+            {
+                var urlRegex = new Regex(@"^(https?:\/\/|ftp:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?(\/[^\s]*)?$");
+                if (!urlRegex.IsMatch(lesson.LessonContentUrl))
+                {
+                    ModelState.AddModelError("LessonContentUrl", "Please enter a valid URL starting with http:// or https://");
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(lesson);
+            }
+
+            _context.Lessons.Update(lesson);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", new { moduleId = lesson.ModuleId });
         }
+
         // GET: Lessons/Delete
         public IActionResult Delete(int id)
         {
