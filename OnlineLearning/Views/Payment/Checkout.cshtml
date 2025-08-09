@@ -1,0 +1,126 @@
+﻿@model OnlineLearning.Models.DTOs.PaymentDto
+@{
+    ViewData["Title"] = "Checkout";
+    var course = ViewBag.Course as OnlineLearning.Models.Course;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <h3 class="mb-0"><i class="bi bi-credit-card me-2"></i>Checkout</h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Course Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h5>Course: @course?.CourseTitle</h5>
+                            <p class="text-muted">@course?.CourseDescription</p>
+                            <p><strong>Instructor:</strong> @course?.Instructor?.InstFullName</p>
+                            <p><strong>Category:</strong> @course?.Category?.CategName</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h3 class="text-success">$@course?.CoursePrice.ToString("F2")</h3>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Error Messages -->
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Payment Form -->
+                    <form asp-action="ProcessPayment" asp-controller="Payment" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="CourseId" />
+                        <input type="hidden" asp-for="Amount" />
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="PaymentMethod" class="form-label">Payment Method</label>
+                                <select asp-for="PaymentMethod" class="form-select">
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="Debit Card">Debit Card</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="CardHolderName" class="form-label">Cardholder Name</label>
+                                <input asp-for="CardHolderName" class="form-control" placeholder="Ahmed Darwish" required />
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="CardNumber" class="form-label">Card Number</label>
+                                <input asp-for="CardNumber" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19" required />
+                                
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="ExpiryDate" class="form-label">Expiry Date</label>
+                                <input asp-for="ExpiryDate" class="form-control" placeholder="MM/YY" maxlength="5" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CVV" class="form-label">CVV</label>
+                                <input asp-for="CVV" class="form-control" placeholder="123" maxlength="4" required />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-controller="Courses" asp-action="Details" asp-route-id="@Model.CourseId" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Course
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-credit-card me-1"></i>Pay $@course?.CoursePrice.ToString("F2")
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-shield-check me-2"></i>
+                Your payment information is secure and encrypted.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Format card number input
+    document.addEventListener('DOMContentLoaded', function () {
+        const cardNumberInput = document.querySelector('input[name="CardNumber"]');
+        if (cardNumberInput) {
+            cardNumberInput.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\s/g, '');
+                let formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
+                e.target.value = formattedValue;
+            });
+        }
+
+        // Format expiry date input
+        const expiryInput = document.querySelector('input[name="ExpiryDate"]');
+        if (expiryInput) {
+            expiryInput.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
+        }
+    });
+</script>

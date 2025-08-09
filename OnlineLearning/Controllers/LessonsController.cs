@@ -239,7 +239,7 @@ namespace OnlineLearning.Controllers
             var role = HttpContext.Session.GetString("UserRole");
             if (role != "Instructor")
                 return Unauthorized();
-
+            
             var lesson = _context.Lessons.FirstOrDefault(l => l.LessonId == id);
             if (lesson == null) return NotFound();
 

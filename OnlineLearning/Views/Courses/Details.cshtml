@@ -5,7 +5,7 @@
     var role = Context.Session.GetString("UserRole");
     var studentId = Context.Session.GetInt32("UserId");
     bool isEnrolled = false;
-    
+
 
     if (role == "Student" && studentId.HasValue)
     {
@@ -42,12 +42,26 @@
             <h3 class="mb-0">
                 <i class="bi bi-journal-bookmark-fill me-2"></i>@Model.CourseTitle
             </h3>
-            @if (Model.IsPremium == true)
-            {
-                <span class="badge bg-warning text-dark">
-                    <i class="bi bi-star-fill me-1"></i>Premium
-                </span>
-            }
+            <div class="d-flex gap-2">
+                @if (Model.IsPremium == true)
+                {
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-star-fill me-1"></i>Premium
+                    </span>
+                }
+                @if (Model.CoursePrice > 0)
+                {
+                    <span class="badge bg-success fs-6">
+                        <i class="bi bi-currency-dollar"></i>@Model.CoursePrice.ToString("F2")
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-info fs-6">
+                        <i class="bi bi-gift-fill me-1"></i>Free
+                    </span>
+                }
+            </div>
         </div>
 
         <div class="card-body">
@@ -74,6 +88,17 @@
                     <strong><i class="bi bi-people-fill me-2"></i>Enrolled Students:</strong>
                     @(Model.Enrollments?.Count ?? 0)
                 </li>
+                <li class="list-group-item">
+                    <strong><i class="bi bi-currency-dollar me-2"></i>Price:</strong>
+                    @if (Model.CoursePrice > 0)
+                    {
+                        <span class="text-success fw-bold fs-5">$@Model.CoursePrice.ToString("F2")</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Free</span>
+                    }
+                </li>
             </ul>
         </div>
 
@@ -83,19 +108,28 @@
             {
                 if (isEnrolled)
                 {
-                    <span class="badge bg-success">
+                    <span class="badge bg-success fs-6">
                         <i class="bi bi-check-circle me-1"></i> Enrolled
                     </span>
                 }
                 else
                 {
-                    <form asp-controller="Courses" asp-action="Enroll" method="post" class="m-0 d-inline">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="courseId" value="@Model.CourseId" />
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-cart-plus me-1"></i> Enroll
-                        </button>
-                    </form>
+                    @if (Model.CoursePrice > 0)
+                    {
+                        <a asp-controller="Payment" asp-action="Checkout" asp-route-courseId="@Model.CourseId" class="btn btn-success">
+                            <i class="bi bi-credit-card me-1"></i> Pay $@Model.CoursePrice.ToString("F2") & Enroll
+                        </a>
+                    }
+                    else
+                    {
+                        <form asp-controller="Courses" asp-action="Enroll" method="post" class="m-0 d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@Model.CourseId" />
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cart-plus me-1"></i> Enroll (Free)
+                            </button>
+                        </form>
+                    }
                 }
             }
 
@@ -111,15 +145,13 @@
                     </a>
                 }
 
-
-                    @if (role == "Instructor" && studentId==Model.InstructorId)
-                    {
-                        <a asp-controller="Modules" asp-action="Index" asp-route-courseId="@Model.CourseId"
-                           class="btn btn-outline-primary">
-                            <i class="bi bi-list-task"></i> Manage Modules
-                        </a>
-                    }
-                
+                @if (role == "Instructor" && studentId == Model.InstructorId)
+                {
+                    <a asp-controller="Modules" asp-action="Index" asp-route-courseId="@Model.CourseId"
+                       class="btn btn-outline-primary">
+                        <i class="bi bi-list-task"></i> Manage Modules
+                    </a>
+                }
             </div>
         </div>
     </div>

@@ -40,7 +40,8 @@ public partial class OnlineLearningContext : DbContext
     public virtual DbSet<Student> Students { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=Ahmed\\SQLEXPRESS;Database=OnlineLearning;Trusted_Connection=True;TrustServerCertificate=True;Encrypt=False;");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=AHMED\\SQLEXPRESS;Database=OnlineLearning;Trusted_Connection=True;TrustServerCertificate=True;Encrypt=False;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -93,25 +94,47 @@ public partial class OnlineLearningContext : DbContext
 
         modelBuilder.Entity<Course>(entity =>
         {
-            entity.HasKey(e => e.CourseId).HasName("PK__Courses__37E005DB42A30675");
+            entity.ToTable("Courses");
+            entity.HasKey(e => e.CourseId);
 
-            entity.Property(e => e.CourseId).HasColumnName("Course_Id");
-            entity.Property(e => e.CourseDescription).HasColumnName("Course_Description");
+            entity.Property(e => e.CourseId)
+                .HasColumnName("Course_Id")
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.CourseTitle)
-                .HasMaxLength(200)
-                .HasColumnName("Course_Title");
+                .HasColumnName("Course_Title")
+                .HasMaxLength(200);
+
+            entity.Property(e => e.CourseDescription)
+                .HasColumnName("Course_Description");
+
+            entity.Property(e => e.CoursePrice)
+                .HasColumnName("Course_Price")
+                .HasColumnType("decimal(10,2)")
+                .HasDefaultValue(0m);
+
+            entity.Property(e => e.IsPremium)
+                .HasColumnName("IsPremium")
+                .HasDefaultValue(false);
+
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.IsPremium).HasDefaultValue(false);
+                .HasColumnName("CreatedAt")
+                .HasDefaultValueSql("GETDATE()");
 
-            entity.HasOne(d => d.Category).WithMany(p => p.Courses)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK__Courses__Categor__5629CD9C");
+            entity.Property(e => e.InstructorId)
+                .HasColumnName("InstructorId");
 
-            entity.HasOne(d => d.Instructor).WithMany(p => p.Courses)
-                .HasForeignKey(d => d.InstructorId)
-                .HasConstraintName("FK__Courses__Instruc__5535A963");
+            entity.Property(e => e.CategoryId)
+                .HasColumnName("CategoryId");
+
+            // Foreign key relationships
+            entity.HasOne(d => d.Category)
+                .WithMany(p => p.Courses)
+                .HasForeignKey(d => d.CategoryId);
+
+            entity.HasOne(d => d.Instructor)
+                .WithMany(p => p.Courses)
+                .HasForeignKey(d => d.InstructorId);
         });
 
         modelBuilder.Entity<Enrollment>(entity =>
@@ -123,6 +146,9 @@ public partial class OnlineLearningContext : DbContext
             entity.Property(e => e.EnrollDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(20)
+                .HasDefaultValue("Pending");
 
             entity.HasOne(d => d.Course).WithMany(p => p.Enrollments)
                 .HasForeignKey(d => d.CourseId)
@@ -193,6 +219,12 @@ public partial class OnlineLearningContext : DbContext
             entity.Property(e => e.PaymentDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(50)
+                .HasDefaultValue("Credit Card");
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(20)
+                .HasDefaultValue("Completed");
 
             entity.HasOne(d => d.Course).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.CourseId)

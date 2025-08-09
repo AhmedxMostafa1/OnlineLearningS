@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OnlineLearning.Models;
 
@@ -18,6 +19,8 @@ public partial class Course
     public bool? IsPremium { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+  
+    public decimal CoursePrice { get; set; }
 
     public virtual Category? Category { get; set; }
 

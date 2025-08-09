@@ -25,7 +25,7 @@ namespace OnlineLearning.Controllers
                 .Include(c => c.Instructor)
                 .Include(c => c.Category)
                 .Include(c => c.Enrollments)
-                
+
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
@@ -83,17 +83,13 @@ namespace OnlineLearning.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CourseTitle,CourseDescription,CategoryId,IsPremium")] Course course)
+        public async Task<IActionResult> Create([Bind("CourseTitle,CourseDescription,CategoryId,IsPremium,CoursePrice")] Course course)
         {
             ViewBag.CategoryId = new SelectList(_context.Categories, "CategId", "CategName", course.CategoryId);
-
-
-
             var instructorId = HttpContext.Session.GetInt32("UserId");
 
             if (instructorId == null || HttpContext.Session.GetString("UserRole") != "Instructor")
             {
-
                 return Unauthorized();
             }
 
@@ -101,18 +97,25 @@ namespace OnlineLearning.Controllers
             {
                 ModelState.AddModelError("CourseTitle", "Course title is required.");
             }
+
             if (string.IsNullOrWhiteSpace(course.CourseDescription))
             {
                 ModelState.AddModelError("CourseDescription", "Course description is required.");
             }
+
             if (course.CategoryId <= 0)
             {
                 ModelState.AddModelError("CategoryId", "Please select a category.");
             }
 
+            if (course.CoursePrice < 0)
+            {
+                ModelState.AddModelError("CoursePrice", "Price cannot be negative.");
+            }
+
             if (!ModelState.IsValid)
             {
-                return View(course); // Return to form with error messages
+                return View(course);
             }
 
             course.InstructorId = instructorId.Value;
@@ -121,11 +124,7 @@ namespace OnlineLearning.Controllers
             _context.Add(course);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("MyCourses","Courses");
-
-
-
-            
+            return RedirectToAction("MyCourses", "Courses");
         }
 
 
@@ -148,38 +147,59 @@ namespace OnlineLearning.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CourseId,CourseTitle,CourseDescription,CategoryId,IsPremium")] Course course)
-            
+        public async Task<IActionResult> Edit(int id, [Bind("CourseId,CourseTitle,CourseDescription,CategoryId,IsPremium,CoursePrice")] Course course)
         {
             course.InstructorId = HttpContext.Session.GetInt32("UserId");
-
 
             if (id != course.CourseId)
             {
                 return NotFound();
             }
+
             if (string.IsNullOrWhiteSpace(course.CourseTitle))
             {
                 ModelState.AddModelError("CourseTitle", "Course title is required.");
             }
+
             if (string.IsNullOrWhiteSpace(course.CourseDescription))
             {
                 ModelState.AddModelError("CourseDescription", "Course description is required.");
             }
+
             if (course.CategoryId <= 0)
             {
                 ModelState.AddModelError("CategoryId", "Please select a category.");
             }
 
+            if (course.CoursePrice < 0)
+            {
+                ModelState.AddModelError("CoursePrice", "Price cannot be negative.");
+            }
+
             if (!ModelState.IsValid)
             {
-                return View(course); // Return to form with error messages
+                ViewBag.CategoryId = new SelectList(_context.Categories, "CategId", "CategName", course.CategoryId);
+                return View(course);
             }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(course);
+                    // Get the existing course to preserve fields not in the form
+                    var existingCourse = await _context.Courses.FindAsync(id);
+                    if (existingCourse == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Update only the fields from the form
+                    existingCourse.CourseTitle = course.CourseTitle;
+                    existingCourse.CourseDescription = course.CourseDescription;
+                    existingCourse.CategoryId = course.CategoryId;
+                    existingCourse.IsPremium = course.IsPremium;
+                    existingCourse.CoursePrice = course.CoursePrice;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -193,10 +213,10 @@ namespace OnlineLearning.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction("MyCourses","Courses");
+                return RedirectToAction("MyCourses", "Courses");
             }
-            ViewBag.InstructorId = new SelectList(_context.Instructors, "InstId", "InstFullName", course.InstructorId);
-            ViewBag.CategoryId = new SelectList(_context.Categories, "CategoId", "CategName", course.CategoryId);
+
+            ViewBag.CategoryId = new SelectList(_context.Categories, "CategId", "CategName", course.CategoryId);
             return View(course);
         }
 
@@ -286,9 +306,11 @@ namespace OnlineLearning.Controllers
             var course = await _context.Courses
                 .Include(c => c.Enrollments)
                 .FirstOrDefaultAsync(c => c.CourseId == courseId);
+
             if (course == null)
                 return NotFound();
 
+            // Check if already enrolled
             bool alreadyEnrolled = course.Enrollments.Any(e => e.StudentId == studentId.Value);
             if (alreadyEnrolled)
             {
@@ -296,48 +318,44 @@ namespace OnlineLearning.Controllers
                 return RedirectToAction("Details", new { id = courseId });
             }
 
-            if (course.IsPremium == true)
+            // If course has a price, redirect to payment
+            if (course.CoursePrice > 0)
             {
-                TempData["Alert"] = "This is a premium course. Please complete payment before enrolling.";
-                return RedirectToAction("Details", new { id = courseId });
+                return RedirectToAction("Checkout", "Payment", new { courseId = courseId });
             }
 
+            // Free course - enroll directly
             var enrollment = new Enrollment
             {
                 CourseId = courseId,
                 StudentId = studentId.Value,
-                // EnrollDate and CompletionStatus rely on DB defaults if configured
+                EnrollDate = DateTime.UtcNow,
+                PaymentStatus = "Completed", // Free course
+                CompletionStatus = false
             };
+
             _context.Enrollments.Add(enrollment);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Successfully enrolled in the course.";
+            TempData["Success"] = "Successfully enrolled in the free course.";
             return RedirectToAction("MyCourses");
         }
+
         public async Task<IActionResult> Content(int id)
         {
-            var role = HttpContext.Session.GetString("UserRole");
-            var studentId = HttpContext.Session.GetInt32("UserId");
-
             var course = await _context.Courses
                 .Include(c => c.Modules)
                     .ThenInclude(m => m.Lessons)
                 .FirstOrDefaultAsync(c => c.CourseId == id);
 
             if (course == null)
-                return NotFound();
-
-            bool isEnrolled = role == "Student" &&
-                              _context.Enrollments.Any(e => e.CourseId == id && e.StudentId == studentId);
-
-            if (!isEnrolled && role == "Student")
             {
-                TempData["Alert"] = "You must enroll in this course to view its content.";
-                return RedirectToAction("Details", new { id });
+                return NotFound();
             }
 
-            return View(course);
+            return View(course); 
         }
 
     }
+
 }
