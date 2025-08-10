@@ -79,10 +79,12 @@ namespace OnlineLearning.Controllers
                 string.IsNullOrWhiteSpace(paymentDto.CVV) ||
                 string.IsNullOrWhiteSpace(paymentDto.CardHolderName))
             {
+                
                 TempData["Error"] = "Please fill in all payment details.";
                 ViewBag.Course = course;
                 return View("Checkout", paymentDto);
             }
+            
 
             // Simulate payment processing (replace with actual payment gateway)
             bool paymentSuccess = ProcessPaymentWithGateway(paymentDto);

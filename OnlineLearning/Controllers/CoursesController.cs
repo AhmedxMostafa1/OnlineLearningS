@@ -343,9 +343,15 @@ namespace OnlineLearning.Controllers
 
         public async Task<IActionResult> Content(int id)
         {
+            var role = HttpContext.Session.GetString("UserRole");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
             var course = await _context.Courses
+                .Include(c => c.Enrollments)
                 .Include(c => c.Modules)
                     .ThenInclude(m => m.Lessons)
+                .Include(c => c.Modules)
+                    .ThenInclude(m => m.Quizzes)
                 .FirstOrDefaultAsync(c => c.CourseId == id);
 
             if (course == null)
@@ -353,9 +359,25 @@ namespace OnlineLearning.Controllers
                 return NotFound();
             }
 
-            return View(course); 
+            // Check if user has access to this content
+            bool hasAccess = false;
+
+            if (role == "Instructor" && course.InstructorId == userId)
+            {
+                hasAccess = true;
+            }
+            else if (role == "Student" && userId.HasValue)
+            {
+                hasAccess = course.Enrollments.Any(e => e.StudentId == userId.Value);
+            }
+
+            if (!hasAccess)
+            {
+                TempData["Alert"] = "You need to be enrolled in this course to access the content.";
+                return RedirectToAction("Details", new { id = id });
+            }
+
+            return View(course);
         }
-
     }
-
-}
+    }

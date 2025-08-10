@@ -1,0 +1,62 @@
+﻿@model OnlineLearning.Models.Quiz
+@{
+    ViewData["Title"] = "Edit Quiz Question";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4 text-warning">✏️ Edit Quiz Question for @ViewBag.ModuleTitle</h2>
+
+    <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+        <input type="hidden" asp-for="QuizId" />
+        <input type="hidden" asp-for="ModuleId" />
+
+        <div class="mb-3">
+            <label asp-for="Question" class="form-label">Question</label>
+            <textarea asp-for="Question" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Question" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="OptionA" class="form-label">Option A</label>
+                <input asp-for="OptionA" class="form-control" />
+                <span asp-validation-for="OptionA" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="OptionB" class="form-label">Option B</label>
+                <input asp-for="OptionB" class="form-control" />
+                <span asp-validation-for="OptionB" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="OptionC" class="form-label">Option C</label>
+                <input asp-for="OptionC" class="form-control" />
+                <span asp-validation-for="OptionC" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="OptionD" class="form-label">Option D</label>
+                <input asp-for="OptionD" class="form-control" />
+                <span asp-validation-for="OptionD" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="CorrectOption" class="form-label">Correct Answer</label>
+            <select asp-for="CorrectOption" class="form-select">
+                <option value="">Select the correct option</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+            <span asp-validation-for="CorrectOption" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">Update Quiz Question</button>
+            <a asp-action="Index" asp-route-moduleId="@Model.ModuleId" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

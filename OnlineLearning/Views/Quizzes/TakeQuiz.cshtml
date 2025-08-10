@@ -1,0 +1,68 @@
+﻿@model List<OnlineLearning.Models.Quiz>
+@{
+    ViewData["Title"] = "Take Quiz - " + ViewBag.ModuleTitle;
+}
+
+<div class="container py-4">
+    <h2 class="mb-4 text-info">🧠 Quiz: @ViewBag.ModuleTitle</h2>
+
+    <div class="alert alert-info">
+        <strong>Instructions:</strong> Please answer all questions and click Submit Quiz when finished.
+    </div>
+
+    <form asp-action="SubmitQuiz" asp-route-moduleId="@ViewBag.ModuleId" method="post">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Question @(i + 1)</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">@Model[i].Question</p>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answers[@Model[i].QuizId]" value="A" id="q@(Model[i].QuizId)_a">
+                        <label class="form-check-label" for="q@(Model[i].QuizId)_a">
+                            A) @Model[i].OptionA
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answers[@Model[i].QuizId]" value="B" id="q@(Model[i].QuizId)_b">
+                        <label class="form-check-label" for="q@(Model[i].QuizId)_b">
+                            B) @Model[i].OptionB
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answers[@Model[i].QuizId]" value="C" id="q@(Model[i].QuizId)_c">
+                        <label class="form-check-label" for="q@(Model[i].QuizId)_c">
+                            C) @Model[i].OptionC
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answers[@Model[i].QuizId]" value="D" id="q@(Model[i].QuizId)_d">
+                        <label class="form-check-label" for="q@(Model[i].QuizId)_d">
+                            D) @Model[i].OptionD
+                        </label>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">Submit Quiz</button>
+            <a href="javascript:history.back()" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Confirm before submitting
+    document.querySelector('form').addEventListener('submit', function (e) {
+        if (!confirm('Are you sure you want to submit your quiz? You cannot change your answers after submission.')) {
+            e.preventDefault();
+        }
+    });
+</script>

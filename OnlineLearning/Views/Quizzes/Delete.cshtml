@@ -1,0 +1,26 @@
+﻿@model OnlineLearning.Models.Quiz
+@{
+    ViewData["Title"] = "Delete Quiz Question";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4 text-danger">🗑️ Delete Quiz Question</h2>
+
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        Are you sure you want to delete this quiz question? This action cannot be undone.
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Question Details</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Module:</strong> @Model.Module?.ModuleTitle</p>
+            <p><strong>Question:</strong> @Model.Question</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>A)</strong> @Model.OptionA</p>
+                    <p><strong>C)</strong> @Model.OptionC</p>
+                </div>
+                <div class=" col-m

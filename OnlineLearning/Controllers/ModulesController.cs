@@ -25,6 +25,9 @@ namespace OnlineLearning.Controllers
 
             var course = _context.Courses
                 .Include(c => c.Modules)
+                    .ThenInclude(m => m.Lessons) // Include lessons for count
+                .Include(c => c.Modules)
+                    .ThenInclude(m => m.Quizzes) // Include quizzes for count
                 .FirstOrDefault(c => c.CourseId == courseId);
 
             if (course == null) return NotFound();
